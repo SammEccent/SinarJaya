@@ -1,166 +1,81 @@
+<?php defined('BASEURL') or exit('No direct script access allowed'); ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>Sinar Jaya Bus Ticket Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sinar Jaya</title>
+    <link rel="stylesheet" href="<?= BASEURL ?>css/style.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-
-        body,
-        html {
-            height: 100%;
-            margin: 0;
-            font-family: 'Inter', Arial, sans-serif;
-            background: #f5f7fa;
+        /* Ensure readable sans-serif for this page */
+        html,
+        body {
+            font-family: Inter, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif
         }
 
-        .container {
-            display: flex;
-            height: 100vh;
-        }
-
-        .left {
-            flex: 1;
-            background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80') center center/cover no-repeat;
-            position: relative;
-        }
-
-        .left::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            backdrop-filter: blur(8px);
-            background: rgba(30, 41, 59, 0.25);
-        }
-
-        .right {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #fff;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 370px;
-            padding: 2.5rem 2rem;
-            border-radius: 18px;
-            box-shadow: 0 8px 32px rgba(30, 41, 59, 0.10);
-            background: #fff;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .logo {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .logo img {
-            height: 38px;
-            opacity: 0.85;
-        }
-
-        .login-title {
-            text-align: center;
-            font-size: 1.45rem;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 0.5rem;
-            letter-spacing: 0.01em;
-        }
-
-        .login-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-        }
-
-        .login-form input {
-            padding: 0.85rem 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            background: #f8fafc;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            outline: none;
-        }
-
-        .login-form input:focus,
-        .login-form input:hover {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 2px #2563eb22;
-            background: #fff;
-        }
-
-        .login-btn {
-            padding: 0.95rem 0;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.08rem;
-            font-weight: 600;
-            color: #fff;
-            background: linear-gradient(90deg, #2563eb 0%, #1e40af 100%);
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.10);
-            transition: background 0.2s, box-shadow 0.2s;
-        }
-
-        .login-btn:hover {
-            background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
-            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
-        }
-
-        @media (max-width: 900px) {
-            .container {
-                flex-direction: column;
-            }
-
-            .left,
-            .right {
-                flex: none;
-                height: 45vh;
-            }
-
-            .right {
-                height: 55vh;
-            }
+        .visually-hidden {
+            position: absolute !important;
+            height: 1px;
+            width: 1px;
+            overflow: hidden;
+            clip: rect(1px, 1px, 1px, 1px);
+            white-space: nowrap;
+            border: 0;
+            padding: 0;
+            margin: -1px
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="left"></div>
-        <div class="right">
-            <div class="login-card">
-                <div class="logo">
-                    <!-- Simple Sinar Jaya logo SVG -->
-                    <img src="https://i.imgur.com/6QKQh6B.png" alt="Sinar Jaya Logo">
-                </div>
-                <div class="login-title">Login to Sinar Jaya</div>
-                <?php if (isset($_SESSION['error'])): ?>
-                    <div class="error-message">
-                        <?php
-                        echo htmlspecialchars($_SESSION['error']);
-                        unset($_SESSION['error']);
-                        ?>
+    <div class="auth-split">
+        <div class="auth-image-side" aria-hidden="true">
+            <div class="image-overlay"></div>
+        </div>
+
+        <div class="auth-form-side">
+            <main class="login-card" role="main" aria-labelledby="login-heading">
+                <div class="card-body">
+                    <div class="login-brand">
+                        <!-- Minimal inline logo (bus icon) -->
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect x="1.5" y="6" width="21" height="10" rx="2" stroke="#0f4bd9" stroke-width="1.25" fill="#ffffff" />
+                            <circle cx="7" cy="17" r="1" fill="#0f4bd9" />
+                            <circle cx="17" cy="17" r="1" fill="#0f4bd9" />
+                            <path d="M3 9h18" stroke="#0f4bd9" stroke-width="1" />
+                        </svg>
+                        <div class="brand-text">
+                            <span class="brand-name">Sinar Jaya</span>
+                            <small class="brand-tag">Premium Travel</small>
+                        </div>
                     </div>
-                <?php endif; ?>
-                <form class="login-form" method="post" action="/auth/login">
-                    <input type="text" name="username" placeholder="Username" required autocomplete="username">
-                    <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
-                    <button type="submit" class="login-btn">Login</button>
-                </form>
-            </div>
+
+                    <h1 id="login-heading" class="login-title">Welcome back</h1>
+                    <p class="login-sub">Sign in to continue to your account</p>
+
+                    <form action="<?= BASEURL ?>auth/login" method="POST" class="login-form" autocomplete="on">
+                        <label class="visually-hidden" for="username">Username or email</label>
+                        <input id="username" name="username" class="login-input" type="text" placeholder="Username or email" required autofocus>
+
+                        <label class="visually-hidden" for="password">Password</label>
+                        <input id="password" name="password" class="login-input" type="password" placeholder="Password" required>
+
+                        <div class="form-row">
+                            <label class="checkbox-inline"><input type="checkbox" name="remember"> Remember me</label>
+                            <a class="forgot-link" href="<?= BASEURL ?>auth/forgot">Forgot?</a>
+                        </div>
+
+                        <button type="submit" class="btn btn-login">Login</button>
+
+                        <p class="signup-note">Don't have an account? <a href="<?= BASEURL ?>auth/register">Sign up</a></p>
+                    </form>
+                </div>
+                <div class="card-accent" aria-hidden="true"></div>
+            </main>
         </div>
     </div>
+
 </body>
 
 </html>
