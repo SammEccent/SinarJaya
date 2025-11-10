@@ -63,7 +63,7 @@
 
                         <div class="form-row">
                             <label class="checkbox-inline"><input type="checkbox" name="remember"> Remember me</label>
-                            <a class="forgot-link" href="<?= BASEURL ?>auth/forgot">Forgot?</a>
+                            <a class="forgot-link" href="<?= BASEURL ?>auth/forgotPassword">Forgot?</a>
                         </div>
 
                         <button type="submit" class="btn btn-login">Login</button>

@@ -1,23 +1,18 @@
 <?php
-// Start session
-session_start();
 
-// Load configurations
+// Mulai session di sini agar tersedia di seluruh aplikasi
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// 1. Muat file konfigurasi utama
 require_once 'config/config.php';
 
-// Load core classes
+// 2. Muat semua file Core
 require_once 'Core/App.php';
 require_once 'Core/Controller.php';
 require_once 'Core/Database.php';
-
-// Load helper functions
 require_once 'Core/helpers.php';
 
-// Error reporting based on environment
-if (ENVIRONMENT === 'development') {
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-} else {
-    error_reporting(0);
-    ini_set('display_errors', 0);
-}
+// 3. Muat autoloader Composer untuk library eksternal (seperti PHPMailer)
+require_once __DIR__ . '/../vendor/autoload.php';

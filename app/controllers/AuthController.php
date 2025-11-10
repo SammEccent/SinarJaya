@@ -32,7 +32,7 @@ class AuthController extends Controller
         $password = $_POST['password'];
 
         // Cari user berdasarkan email
-        $user = $this->userModel->findUserByEmail($email, $email);
+        $user = $this->userModel->findUserByEmail($email);
 
         if ($user && password_verify($password, $user['password'])) {
             // Login berhasil
@@ -212,6 +212,117 @@ class AuthController extends Controller
         } else {
             $_SESSION['error'] = 'Gagal mengubah kata sandi. Silakan coba lagi.';
             header('Location: ' . BASEURL . 'auth/changePassword');
+        }
+        exit;
+    }
+
+    // Method untuk menampilkan halaman lupa password
+    public function forgotPassword()
+    {
+        $this->view('auth/forgot_password');
+    }
+
+    // Method untuk memproses permintaan reset password
+    public function processForgotPassword()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASEURL);
+            exit;
+        }
+
+        $email = $_POST['email'];
+        error_log("AuthController: processForgotPassword - Received email: {$email}");
+        $user = $this->userModel->findUserByEmail($email);
+        error_log("AuthController: processForgotPassword - User found by email: " . ($user ? $user['email'] : 'No user'));
+
+        if ($user) {
+            // Generate token
+            $token = bin2hex(random_bytes(50));
+            // Set expiration time (e.g., 1 hour from now)
+            $expires = date("Y-m-d H:i:s", time() + 3600);
+
+            if ($this->userModel->savePasswordResetToken($email, $token, $expires)) {
+                // Kirim email menggunakan MailHelper yang sudah kita buat
+                if (\App\Helpers\MailHelper::sendPasswordResetEmail($user['email'], $user['fullname'], $token)) {
+                    $_SESSION['success'] = 'Jika email Anda terdaftar, kami telah mengirimkan tautan untuk mengatur ulang kata sandi Anda. Silakan periksa kotak masuk Anda.';
+                } else {
+                    // Pesan jika email gagal terkirim
+                    $_SESSION['error'] = 'Gagal mengirim email reset. Silakan coba lagi nanti.';
+                }
+            } else {
+                $_SESSION['error'] = 'Gagal membuat token reset. Silakan coba lagi.';
+            }
+        } else {
+            // Tampilkan pesan yang sama meskipun email tidak ditemukan untuk alasan keamanan
+            $_SESSION['success'] = 'Jika email Anda terdaftar, kami telah mengirimkan tautan untuk mengatur ulang kata sandi Anda. Silakan periksa kotak masuk Anda.';
+        }
+
+        header('Location: ' . BASEURL . 'auth/forgotPassword');
+        exit;
+    }
+
+    // Method untuk menampilkan halaman reset password
+    public function resetPassword($token = '')
+    {
+        if (empty($token)) {
+            $_SESSION['error'] = 'Token tidak valid atau tidak ditemukan.';
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        error_log("AuthController: resetPassword - Received token: {$token}");
+        $user = $this->userModel->findUserByResetToken($token);
+        error_log("AuthController: resetPassword - User found by token: " . ($user ? $user['email'] : 'No user'));
+
+        if (!$user) {
+            $_SESSION['error'] = 'Token reset tidak valid atau telah kedaluwarsa.';
+            error_log("AuthController: resetPassword - Redirecting to login because user not found for token: {$token}");
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        $this->view('auth/reset_password', ['token' => $token]);
+    }
+
+    // Method untuk memproses reset password
+    public function processResetPassword()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASEURL);
+            exit;
+        }
+
+        $token = $_POST['token'];
+        $new_password = $_POST['new_password'];
+        $confirm_new_password = $_POST['confirm_new_password'];
+
+        if ($new_password !== $confirm_new_password) {
+            $_SESSION['error'] = 'Kata sandi baru dan konfirmasi tidak cocok.';
+            header('Location: ' . BASEURL . 'auth/resetPassword/' . $token);
+            exit;
+        }
+
+        error_log("AuthController: processResetPassword - Processing token: {$token}");
+        $user = $this->userModel->findUserByResetToken($token);
+        error_log("AuthController: processResetPassword - User found by token: " . ($user ? $user['email'] : 'No user'));
+
+        if (!$user) {
+            $_SESSION['error'] = 'Token reset tidak valid atau telah kedaluwarsa.';
+            error_log("AuthController: processResetPassword - Redirecting to login because user not found for token: {$token}");
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        $hashedPassword = password_hash($new_password, PASSWORD_BCRYPT);
+        if ($this->userModel->updatePassword($user['id'], $hashedPassword)) {
+            // Hapus token setelah berhasil direset
+            error_log("AuthController: processResetPassword - Password updated for user: {$user['email']}. Clearing token.");
+            $this->userModel->savePasswordResetToken($user['email'], null, null);
+            $_SESSION['success'] = 'Kata sandi Anda telah berhasil diatur ulang. Silakan masuk.';
+            header('Location: ' . BASEURL . 'auth/login');
+        } else {
+            $_SESSION['error'] = 'Gagal mengatur ulang kata sandi. Silakan coba lagi.';
+            header('Location: ' . BASEURL . 'auth/resetPassword/' . $token);
         }
         exit;
     }

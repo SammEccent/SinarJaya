@@ -63,4 +63,29 @@ class UserModel
         $this->db->bind(':password', $password);
         return $this->db->execute();
     }
+
+    // Save password reset token
+    public function savePasswordResetToken($email, $token, $expires)
+    {
+        error_log("UserModel: Saving token for email: {$email}, token: {$token}, expires: {$expires}");
+        $this->db->prepare("UPDATE user SET reset_token = :token, reset_token_expires_at = :expires WHERE email = :email");
+        $this->db->bind(':token', $token);
+        $this->db->bind(':expires', $expires);
+        $this->db->bind(':email', $email);
+        $result = $this->db->execute();
+        error_log("UserModel: savePasswordResetToken result: " . ($result ? 'true' : 'false'));
+        return $result;
+    }
+
+    // Find user by reset token
+    public function findUserByResetToken($token)
+    {
+        error_log("UserModel: Searching user by reset token: {$token}");
+        $this->db->prepare("SELECT * FROM user WHERE reset_token = :token AND reset_token_expires_at > NOW()");
+        $this->db->bind(':token', $token);
+        $this->db->execute();
+        $user = $this->db->fetch();
+        error_log("UserModel: findUserByResetToken result: " . ($user ? 'User found' : 'No user found or token expired'));
+        return $user;
+    }
 }
