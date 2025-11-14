@@ -242,10 +242,8 @@ class AuthController extends Controller
         if ($user) {
             // Buat token reset yang aman
             $token = bin2hex(random_bytes(50));
-            // Atur waktu kedaluwarsa (misalnya, 15 menit dari sekarang)
-            $expires = date("Y-m-d H:i:s", time() + 900);
 
-            $tokenSaved = $this->userModel->savePasswordResetToken($email, $token, $expires);
+            $tokenSaved = $this->userModel->savePasswordResetToken($email, $token);
             $emailSent = false;
             if ($tokenSaved) {
                 // Kirim email menggunakan MailHelper dengan token
@@ -255,7 +253,8 @@ class AuthController extends Controller
             if (!$tokenSaved || !$emailSent) {
                 // Jika ada kegagalan, catat error tapi jangan tampilkan ke pengguna
                 error_log("Gagal mengirim email reset password untuk {$email}. TokenSaved: {$tokenSaved}, EmailSent: {$emailSent}");
-                // Untuk keamanan, jangan beritahu pengguna bahwa ada error internal.
+                // Untuk keamanan, jangan beritahu pengguna bahwa ada error internal. Hapus token jika gagal kirim email.
+                $this->userModel->clearPasswordResetToken($token);
                 // Pesan sukses umum sudah diatur di atas.
                 $_SESSION['error'] = 'Terjadi kesalahan pada sistem. Silakan coba lagi nanti.';
             }
@@ -270,7 +269,7 @@ class AuthController extends Controller
     public function resetPassword($token = '')
     {
         if (empty($token)) {
-            $_SESSION['error'] = 'Token tidak valid atau tidak ditemukan.';
+            $_SESSION['error'] = 'Token tidak val atau tidak ditemukan.';
             header('Location: ' . BASEURL . 'auth/login');
             exit;
         }
@@ -280,11 +279,12 @@ class AuthController extends Controller
         error_log("AuthController: resetPassword - User found by token: " . ($user ? $user['email'] : 'No user'));
 
         if (!$user) {
-            $_SESSION['error'] = 'Token reset tidak valid atau telah kedaluwarsa.';
+            $_SESSION['error'] = 'Token reset tidak valid atau telah kedaluwarsa. Token yang digunakan: ' . htmlspecialchars($token);
             error_log("AuthController: resetPassword - Redirecting to login because user not found for token: {$token}");
             header('Location: ' . BASEURL . 'auth/login');
             exit;
         }
+
 
         $this->view('auth/reset_password', ['token' => $token]);
     }
@@ -297,9 +297,16 @@ class AuthController extends Controller
             exit;
         }
 
-        $token = $_POST['token'];
+        // Pastikan token ada dan tidak kosong
+        $token = isset($_POST['token']) ? $_POST['token'] : '';
         $new_password = $_POST['new_password'];
         $confirm_new_password = $_POST['confirm_new_password'];
+
+        if (empty($token)) {
+            $_SESSION['error'] = 'Permintaan tidak valid. Token tidak ditemukan.';
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
 
         if ($new_password !== $confirm_new_password) {
             $_SESSION['error'] = 'Kata sandi baru dan konfirmasi tidak cocok.';
@@ -321,8 +328,8 @@ class AuthController extends Controller
         $hashedPassword = password_hash($new_password, PASSWORD_BCRYPT);
         if ($this->userModel->updatePassword($user['id'], $hashedPassword)) {
             // Hapus token setelah berhasil direset
-            error_log("AuthController: processResetPassword - Password updated for user: {$user['email']}. Clearing token.");
-            $this->userModel->savePasswordResetToken($user['email'], null, null);
+            error_log("AuthController: processResetPassword - Password updated for user: {$user['email']}. Clearing reset token.");
+            $this->userModel->clearPasswordResetToken($token);
             $_SESSION['success'] = 'Kata sandi Anda telah berhasil diatur ulang. Silakan masuk.';
             header('Location: ' . BASEURL . 'auth/login');
         } else {

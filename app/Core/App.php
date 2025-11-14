@@ -11,8 +11,9 @@ class App
         $url = $this->parseUrl();
 
         // mencari controller
-        if (isset($url[0]) && file_exists('../app/Controllers/' . $url[0] . 'Controller.php')) {
-            $this->controller = $url[0] . 'Controller';
+        // Menggunakan ucfirst untuk memastikan huruf pertama controller kapital (e.g., auth -> Auth)
+        if (isset($url[0]) && file_exists('../app/Controllers/' . ucfirst($url[0]) . 'Controller.php')) {
+            $this->controller = ucfirst($url[0]) . 'Controller';
             unset($url[0]); // Remove the controller from the URL array
         }
 

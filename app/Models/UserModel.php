@@ -65,12 +65,10 @@ class UserModel
     }
 
     // Save password reset token
-    public function savePasswordResetToken($email, $token, $expires)
+    public function savePasswordResetToken($email, $token)
     {
-        error_log("UserModel: Saving token for email: {$email}, token: {$token}, expires: {$expires}");
-        $this->db->prepare("UPDATE user SET reset_token = :token, reset_token_expires_at = :expires WHERE email = :email");
+        $this->db->prepare("UPDATE user SET reset_token = :token, reset_token_expires_at = DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE email = :email");
         $this->db->bind(':token', $token);
-        $this->db->bind(':expires', $expires);
         $this->db->bind(':email', $email);
         $result = $this->db->execute();
         error_log("UserModel: savePasswordResetToken result: " . ($result ? 'true' : 'false'));
@@ -80,12 +78,28 @@ class UserModel
     // Find user by reset token
     public function findUserByResetToken($token)
     {
-        error_log("UserModel: Searching user by reset token: {$token}");
-        $this->db->prepare("SELECT * FROM user WHERE reset_token = :token AND reset_token_expires_at > NOW()");
+        // Tambahkan pengecekan untuk memastikan token tidak kosong sebelum melakukan kueri
+        if (empty($token)) {
+            error_log("UserModel: findUserByResetToken was called with an empty token.");
+            return false;
+        }
+
+        $this->db->prepare("SELECT * FROM user WHERE reset_token = :token");
         $this->db->bind(':token', $token);
         $this->db->execute();
         $user = $this->db->fetch();
-        error_log("UserModel: findUserByResetToken result: " . ($user ? 'User found' : 'No user found or token expired'));
+        error_log("UserModel: findUserByResetToken result: " . ($user ? 'User found' : 'No user found'));
         return $user;
+    }
+
+    // Clear password reset token by the token itself
+    public function clearPasswordResetToken($token)
+    {
+        if (empty($token)) {
+            return false;
+        }
+        $this->db->prepare("UPDATE user SET reset_token = NULL, reset_token_expires_at = NULL WHERE reset_token = :token");
+        $this->db->bind(':token', $token);
+        return $this->db->execute();
     }
 }
