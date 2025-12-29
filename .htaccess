@@ -1,6 +1,14 @@
-# Apache configuration
+RewriteEngine On
 
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^(.*)$ public/$1 [L]
-</IfModule>
+# Redirect all requests to public folder
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L,QSA]
+
+# Prevent directory listing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^(\.env|composer\.json|composer\.lock|\.htaccess)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
