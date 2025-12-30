@@ -1,45 +1,11 @@
 {
-    "name": "samirudin/bus-ticket-system",
-    "description": "Sistem Pemesanan Tiket Bus Online",
-    "type": "project",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Samirudin Annas Alfattah",
-            "email": "annas20160464@gmail.com"
-        }
-    ],
     "require": {
-        "php": ">=7.4",
-        "ext-pdo": "*",
-        "ext-json": "*"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^9.0"
-    },
+        "phpmailer/phpmailer": "^7.0"
+    }
+    ,
     "autoload": {
         "psr-4": {
             "App\\": "app/"
-        },
-        "files": [
-            "app/Helpers/functions.php"
-        ]
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Tests\\": "tests/"
         }
-    },
-    "scripts": {
-        "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
-        ]
-    },
-    "minimum-stability": "stable",
-    "prefer-stable": true,
-    "config": {
-        "sort-packages": true,
-        "platform-check": false
     }
 }
