@@ -10,10 +10,14 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Close menu when a link is clicked
+  // Close menu when a link is clicked (except dropdown links)
   const navLinks = document.querySelectorAll(".nav-link");
   navLinks.forEach((link) => {
-    link.addEventListener("click", function () {
+    link.addEventListener("click", function (e) {
+      // Jangan tutup menu jika ini adalah dropdown toggle
+      if (this.closest(".dropdown")) {
+        return;
+      }
       if (navMenu.style.display === "flex") {
         navMenu.style.display = "none";
       }
@@ -33,4 +37,34 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   });
+
+  // Dropdown toggle dengan click
+  const dropdown = document.querySelector(".dropdown");
+  if (dropdown) {
+    const dropdownToggle = dropdown.querySelector(".nav-link");
+
+    dropdownToggle.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation(); // Mencegah event bubbling
+      dropdown.classList.toggle("active");
+    });
+
+    // Tutup dropdown saat klik di luar area
+    document.addEventListener("click", function (e) {
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove("active");
+      }
+    });
+
+    // Jangan tutup dropdown saat klik di dalam dropdown menu
+    const dropdownMenu = dropdown.querySelector(".dropdown-menu");
+    if (dropdownMenu) {
+      dropdownMenu.addEventListener("click", function (e) {
+        // Tutup dropdown hanya setelah link diklik (bukan pada menu itu sendiri)
+        if (e.target.tagName === "A") {
+          dropdown.classList.remove("active");
+        }
+      });
+    }
+  }
 });

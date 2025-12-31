@@ -3,7 +3,7 @@
     <div class="hero-content">
         <h1 class="hero-title">Pesan Tiket Bus Online Mudah & Aman</h1>
         <p class="hero-subtitle">Jelajahi perjalanan Anda dengan Sinar Jaya - Layanan bus terpercaya dengan harga terjangkau</p>
-        <a href="<?php echo BASEURL; ?>booking" class="btn btn-primary btn-lg">Mulai Pemesanan</a>
+        <a href="#search-section" class="btn btn-primary btn-lg">Mulai Pemesanan</a>
     </div>
     <div class="hero-image">
         <i class="fas fa-bus"></i>
@@ -11,27 +11,39 @@
 </section>
 
 <!-- Search Booking Section -->
-<section class="search-section">
+<section class="search-section" id="search-section">
     <div class="container">
         <h2>Cari Tiket Bus</h2>
-        <form action="<?php echo BASEURL; ?>booking/search" method="GET" class="search-form">
+
+        <?php if (isset($_SESSION['search_errors'])): ?>
+            <div class="alert alert-danger" style="margin-bottom: 20px;">
+                <ul style="margin: 0; padding-left: 20px;">
+                    <?php foreach ($_SESSION['search_errors'] as $error): ?>
+                        <li><?php echo htmlspecialchars($error); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php unset($_SESSION['search_errors']); ?>
+        <?php endif; ?>
+
+        <form action="<?php echo BASEURL; ?>home/search" method="GET" class="search-form">
             <div class="form-group">
                 <label for="origin">Dari:</label>
-                <input type="text" id="origin" name="origin" placeholder="Kota asal" required>
+                <input type="text" id="origin" name="origin" placeholder="Masukkan kota asal" required>
             </div>
             <div class="form-group">
                 <label for="destination">Ke:</label>
-                <input type="text" id="destination" name="destination" placeholder="Kota tujuan" required>
+                <input type="text" id="destination" name="destination" placeholder="Masukkan kota tujuan" required>
             </div>
             <div class="form-group">
                 <label for="departure">Tanggal Perjalanan:</label>
-                <input type="date" id="departure" name="departure" required>
+                <input type="date" id="departure" name="departure" min="<?php echo date('Y-m-d'); ?>" required>
             </div>
             <div class="form-group">
                 <label for="passengers">Penumpang:</label>
-                <input type="number" id="passengers" name="passengers" value="1" min="1" max="8" required>
+                <input type="number" id="passengers" name="passengers" value="1" min="1" max="30" required>
             </div>
-            <button type="submit" class="btn btn-primary">Cari Tiket</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Cari Tiket</button>
         </form>
     </div>
 </section>

@@ -83,6 +83,12 @@ class Database
         return $this->dbh->lastInsertId();
     }
 
+    // Alias for getLastInsertId()
+    public function lastInsertId()
+    {
+        return $this->dbh->lastInsertId();
+    }
+
     // Get the row count
     public function rowCount()
     {

@@ -85,4 +85,189 @@ class ScheduleModel
         $this->db->bind(':id', $id);
         return $this->db->execute();
     }
+
+    /**
+     * Search schedules based on route and date
+     * 
+     * @param string $origin Origin city
+     * @param string $destination Destination city
+     * @param string $date Departure date (Y-m-d format)
+     * @param int $passengers Number of passengers
+     * @return array Array of schedules with full details
+     */
+    public function searchSchedules($origin, $destination, $date, $passengers = 1)
+    {
+        // Convert date to datetime range for search
+        $dateStart = $date . ' 00:00:00';
+        $dateEnd = $date . ' 23:59:59';
+
+        $this->db->prepare('
+            SELECT 
+                s.id as schedule_id,
+                s.departure_datetime,
+                s.arrival_datetime,
+                s.base_price,
+                s.available_seats,
+                s.status as schedule_status,
+                s.notes,
+                r.route_id,
+                r.origin_city,
+                r.destination_city,
+                r.route_code,
+                r.status as route_status,
+                b.id as bus_id,
+                b.plate_number,
+                b.total_seats,
+                b.seat_layout,
+                b.facilities as bus_facilities,
+                b.status as bus_status,
+                bc.id as bus_class_id,
+                bc.name as bus_class_name,
+                bc.description as bus_class_description,
+                bc.facilities as class_facilities,
+                bc.base_price_multiplier,
+                TIMESTAMPDIFF(MINUTE, s.departure_datetime, s.arrival_datetime) as duration_minutes
+            FROM schedules s
+            JOIN routes r ON s.route_id = r.route_id
+            JOIN buses b ON s.bus_id = b.id
+            JOIN bus_classes bc ON b.bus_class_id = bc.id
+            WHERE r.origin_city = :origin
+            AND r.destination_city = :destination
+            AND s.departure_datetime BETWEEN :date_start AND :date_end
+            AND s.available_seats >= :passengers
+            AND s.status = "scheduled"
+            AND r.status = "active"
+            AND b.status = "active"
+            ORDER BY s.departure_datetime ASC
+        ');
+
+        $this->db->bind(':origin', $origin);
+        $this->db->bind(':destination', $destination);
+        $this->db->bind(':date_start', $dateStart);
+        $this->db->bind(':date_end', $dateEnd);
+        $this->db->bind(':passengers', $passengers);
+
+        return $this->db->fetchAll();
+    }
+
+    /**
+     * Get schedule with full details by ID
+     * 
+     * @param int $id Schedule ID
+     * @return array|false Schedule data with full details or false
+     */
+    public function getScheduleDetails($id)
+    {
+        $this->db->prepare('
+            SELECT 
+                s.*,
+                r.route_id,
+                r.origin_city,
+                r.destination_city,
+                r.route_code,
+                b.plate_number,
+                b.total_seats,
+                b.seat_layout,
+                b.facilities as bus_facilities,
+                bc.name as bus_class_name,
+                bc.description as bus_class_description,
+                bc.facilities as class_facilities,
+                bc.base_price_multiplier
+            FROM schedules s
+            JOIN routes r ON s.route_id = r.route_id
+            JOIN buses b ON s.bus_id = b.id
+            JOIN bus_classes bc ON b.bus_class_id = bc.id
+            WHERE s.id = :id
+            LIMIT 1
+        ');
+
+        $this->db->bind(':id', $id);
+        return $this->db->fetch();
+    }
+
+    /**
+     * Update only available seats for a schedule
+     * 
+     * @param int $id Schedule ID
+     * @param int $available_seats New available seats count
+     * @return bool Success status
+     */
+    public function updateAvailableSeats($id, $available_seats)
+    {
+        $this->db->prepare('UPDATE schedules SET available_seats = :available_seats, updated_at = :updated_at WHERE id = :id');
+        $this->db->bind(':available_seats', $available_seats);
+        $this->db->bind(':updated_at', date('Y-m-d H:i:s'));
+        $this->db->bind(':id', $id);
+        return $this->db->execute();
+    }
+
+    /**
+     * Recalculate and fix available_seats for a schedule based on actual seat data
+     * This method counts booked seats for this schedule and calculates available seats
+     * 
+     * @param int $schedule_id Schedule ID
+     * @return bool Success status
+     */
+    public function recalculateAvailableSeats($schedule_id)
+    {
+        // Get schedule info including bus_id
+        $schedule = $this->findById($schedule_id);
+        if (!$schedule) {
+            return false;
+        }
+
+        $bus_id = $schedule['bus_id'];
+
+        // Count total seats in the bus
+        $this->db->prepare('SELECT COUNT(*) as total FROM seats WHERE bus_id = :bus_id');
+        $this->db->bind(':bus_id', $bus_id);
+        $result = $this->db->fetch();
+        $total_seats = $result['total'] ?? 0;
+
+        // Count booked seats for this specific schedule
+        // A seat is considered booked for a schedule if:
+        // 1. The seat status is 'booked'
+        // 2. There's a passenger record linking to a booking for this schedule
+        $this->db->prepare('
+            SELECT COUNT(DISTINCT s.id) as booked
+            FROM seats s
+            INNER JOIN passengers p ON s.id = p.seat_id
+            INNER JOIN bookings b ON p.booking_id = b.id
+            WHERE s.bus_id = :bus_id 
+            AND b.schedule_id = :schedule_id
+            AND s.status = "booked"
+            AND b.booking_status IN ("pending", "confirmed")
+        ');
+        $this->db->bind(':bus_id', $bus_id);
+        $this->db->bind(':schedule_id', $schedule_id);
+        $result = $this->db->fetch();
+        $booked_seats = $result['booked'] ?? 0;
+
+        // Calculate available seats
+        $available_seats = $total_seats - $booked_seats;
+
+        // Update the schedule
+        return $this->updateAvailableSeats($schedule_id, $available_seats);
+    }
+
+    /**
+     * Fix all schedules' available_seats by recalculating based on actual seat data
+     * 
+     * @return array Array of fixed schedule IDs
+     */
+    public function fixAllSchedulesAvailableSeats()
+    {
+        // Get all schedules
+        $this->db->prepare('SELECT id FROM schedules');
+        $schedules = $this->db->fetchAll();
+
+        $fixed_ids = [];
+        foreach ($schedules as $schedule) {
+            if ($this->recalculateAvailableSeats($schedule['id'])) {
+                $fixed_ids[] = $schedule['id'];
+            }
+        }
+
+        return $fixed_ids;
+    }
 }

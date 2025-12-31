@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Waktu pembuatan: 30 Des 2025 pada 13.34
+-- Waktu pembuatan: 31 Des 2025 pada 07.27
 -- Versi server: 8.0.30
 -- Versi PHP: 8.4.14
 
@@ -65,7 +65,7 @@ CREATE TABLE `bookings` (
 --
 
 INSERT INTO `bookings` (`id`, `booking_code`, `user_id`, `schedule_id`, `total_passengers`, `total_amount`, `booking_status`, `payment_expiry`, `notes`, `created_at`, `updated_at`) VALUES
-(1, 'SJ-20260105001', 1, 1, 1, 250000.00, 'confirmed', '2026-01-05 15:00:00', NULL, '2025-12-29 11:36:05', '2025-12-29 11:36:05');
+(1, 'SJ-20260105001', 2, 1, 1, 250000.00, 'confirmed', '2026-01-05 15:00:00', '', '2025-12-29 11:36:05', '2025-12-30 07:59:21');
 
 -- --------------------------------------------------------
 
@@ -194,7 +194,6 @@ CREATE TABLE `passengers` (
   `id_card_type` enum('ktp','sim','passport') DEFAULT 'ktp',
   `id_card_number` varchar(50) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
-  `special_request` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -202,8 +201,8 @@ CREATE TABLE `passengers` (
 -- Dumping data untuk tabel `passengers`
 --
 
-INSERT INTO `passengers` (`id`, `booking_id`, `seat_id`, `full_name`, `id_card_type`, `id_card_number`, `phone`, `special_request`, `created_at`) VALUES
-(1, 1, 1, 'Budi Santoso', 'ktp', '3201234567890001', '085712345678', 'Minta kursi dekat jendela', '2025-12-29 11:36:05');
+INSERT INTO `passengers` (`id`, `booking_id`, `seat_id`, `full_name`, `id_card_type`, `id_card_number`, `phone`, `created_at`) VALUES
+(1, 1, 1, 'Budi Santoso', 'ktp', '3201234567890001', '085712345678', '2025-12-29 11:36:05');
 
 -- --------------------------------------------------------
 
@@ -230,7 +229,7 @@ CREATE TABLE `payments` (
 --
 
 INSERT INTO `payments` (`id`, `booking_id`, `payment_method`, `payment_code`, `amount`, `payment_status`, `payment_proof_image`, `paid_at`, `payment_details`, `created_at`, `updated_at`) VALUES
-(1, 1, 'qris', 'PAY-QRIS-9921', 250000.00, 'paid', NULL, '2026-01-05 14:30:00', NULL, '2025-12-29 11:36:05', '2025-12-29 11:36:05');
+(1, 1, 'qris', 'PAY-QRIS-9921', 250000.00, 'paid', NULL, '2025-12-30 14:30:00', NULL, '2025-12-29 11:36:05', '2025-12-30 15:17:33');
 
 -- --------------------------------------------------------
 
@@ -875,8 +874,9 @@ CREATE TABLE `users` (
   `email` varchar(100) NOT NULL,
   `phone` varchar(20) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('admin') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT 'admin',
+  `role` enum('admin','user') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT 'user',
   `is_verified` tinyint(1) DEFAULT '0',
+  `verification_token` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -885,8 +885,10 @@ CREATE TABLE `users` (
 -- Dumping data untuk tabel `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `phone`, `password`, `role`, `is_verified`, `created_at`, `updated_at`) VALUES
-(1, 'admin1', 'annas20160464@gmail.com', '081227230956', '$2a$12$7xpck8B3HeZTRqXnyPdBmOzkTf6QtAUSOPFJI.W62TEcc/B3qZbAW', 'admin', 0, '2025-12-29 05:27:58', '2025-12-29 05:48:02');
+INSERT INTO `users` (`id`, `name`, `email`, `phone`, `password`, `role`, `is_verified`, `verification_token`, `created_at`, `updated_at`) VALUES
+(1, 'admin1', 'admin1@gmail.com', '081227230956', '$2a$12$7xpck8B3HeZTRqXnyPdBmOzkTf6QtAUSOPFJI.W62TEcc/B3qZbAW', 'admin', 1, NULL, '2025-12-29 05:27:58', '2025-12-31 06:54:16'),
+(2, 'User1', 'samir20160464@gmail.com', '081227230956', '$2a$12$htG4kjSWH6X2dMNhUAmi0OfUEKkXGN1vsWS3AvkWGw4Cu09oQNIzy', 'user', 1, NULL, '2025-12-30 14:07:36', '2025-12-31 06:37:58'),
+(8, 'Samirudin Annas Alfattah', 'annas20160464@gmail.com', '081227230956', '$2y$12$9632ivIs8Mx7B0y6tqnbrOc4PEwb38BAPK2PwOC34FQSGoRLevd7O', 'user', 1, NULL, '2025-12-31 07:00:25', '2025-12-31 07:00:37');
 
 --
 -- Indeks untuk tabel yang dibuang
@@ -981,7 +983,9 @@ ALTER TABLE `seats`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `idx_verification_token` (`verification_token`),
+  ADD KEY `idx_is_verified` (`is_verified`);
 
 --
 -- AUTO_INCREMENT untuk tabel yang dibuang
@@ -1057,7 +1061,7 @@ ALTER TABLE `seats`
 -- AUTO_INCREMENT untuk tabel `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)

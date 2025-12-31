@@ -56,4 +56,11 @@ class BusModel
         $this->db->bind(':id', $id);
         return $this->db->execute();
     }
+
+    public function count()
+    {
+        $this->db->prepare('SELECT COUNT(*) as total FROM buses');
+        $result = $this->db->fetch();
+        return $result['total'] ?? 0;
+    }
 }

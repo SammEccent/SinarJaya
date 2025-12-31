@@ -1,4 +1,7 @@
 <?php
+// Set timezone to Asia/Jakarta (WIB)
+date_default_timezone_set('Asia/Jakarta');
+
 defined('BASEURL') or define('BASEURL', 'http://sinarjaya.test/');
 
 // Environment Configuration
@@ -29,3 +32,15 @@ define('RESERVATION_TIMEOUT', 15); // Minutes until unpaid reservation expires
 
 // Maintenance Mode
 define('MAINTENANCE_MODE', false);
+
+// Email Configuration (SMTP)
+define('MAIL_DRIVER', 'smtp'); // or 'sendmail' for local server
+define('MAIL_HOST', 'smtp.gmail.com');
+define('MAIL_PORT', 587);
+define('MAIL_USERNAME', 'samirudin20160464@gmail.com'); // Change this
+define('MAIL_PASSWORD', 'aoed hzah kkmc wuod'); // Change this - Use App Password for Gmail
+define('MAIL_FROM_ADDRESS', 'noreply@sinarjaya.com');
+define('MAIL_FROM_NAME', 'Sinar Jaya Bus');
+define('MAIL_ENCRYPTION', 'tls');
+// Note: For Gmail, use App Password (not regular password)
+// How to get App Password: https://support.google.com/accounts/answer/185833

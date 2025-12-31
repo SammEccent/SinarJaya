@@ -97,4 +97,58 @@ class RouteModel
         $this->db->bind(':id', $route_location_id);
         return $this->db->execute();
     }
+
+    /**
+     * Get boarding points for a route (BOARDING or BOTH)
+     * 
+     * @param int $route_id Route ID
+     * @return array Array of locations where passengers can board
+     */
+    public function getBoardingPoints($route_id)
+    {
+        $this->db->prepare('
+            SELECT rl.route_location_id, rl.location_id, rl.fungsi, rl.sequence,
+                   l.location_name, l.city, l.type, l.address
+            FROM route_location rl
+            JOIN location l ON rl.location_id = l.location_id
+            WHERE rl.route_id = :route_id
+            AND (rl.fungsi = "BOARDING" OR rl.fungsi = "BOTH")
+            ORDER BY rl.sequence ASC
+        ');
+        $this->db->bind(':route_id', $route_id);
+        return $this->db->fetchAll();
+    }
+
+    /**
+     * Get drop points for a route (DROP or BOTH)
+     * 
+     * @param int $route_id Route ID
+     * @return array Array of locations where passengers can drop off
+     */
+    public function getDropPoints($route_id)
+    {
+        $this->db->prepare('
+            SELECT rl.route_location_id, rl.location_id, rl.fungsi, rl.sequence,
+                   l.location_name, l.city, l.type, l.address
+            FROM route_location rl
+            JOIN location l ON rl.location_id = l.location_id
+            WHERE rl.route_id = :route_id
+            AND (rl.fungsi = "DROP" OR rl.fungsi = "BOTH")
+            ORDER BY rl.sequence ASC
+        ');
+        $this->db->bind(':route_id', $route_id);
+        return $this->db->fetchAll();
+    }
+
+    /**
+     * Get total count of routes
+     * 
+     * @return int Total routes count
+     */
+    public function count()
+    {
+        $this->db->prepare('SELECT COUNT(*) as total FROM routes');
+        $result = $this->db->fetch();
+        return $result['total'] ?? 0;
+    }
 }

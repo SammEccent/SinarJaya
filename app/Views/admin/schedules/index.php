@@ -9,7 +9,12 @@
     <div class="section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Daftar Jadwal</h2>
-            <a href="<?php echo BASEURL; ?>admin/schedules/create" class="btn btn-primary">+ Tambah Jadwal</a>
+            <div style="display: flex; gap: 10px;">
+                <a href="<?php echo BASEURL; ?>admin/schedules/fix-seats" class="btn" style="background: #f59e0b; color: white;" onclick="return confirm('Proses ini akan menghitung ulang kursi tersedia untuk semua jadwal. Lanjutkan?')">
+                    <i class="fas fa-wrench"></i> Perbaiki Kursi Tersedia
+                </a>
+                <a href="<?php echo BASEURL; ?>admin/schedules/create" class="btn btn-primary">+ Tambah Jadwal</a>
+            </div>
         </div>
 
         <?php if (!empty($schedules)): ?>
@@ -25,7 +30,7 @@
                             <th>Harga</th>
                             <th>Kursi Tersedia</th>
                             <th>Status</th>
-                            <th style="width: 220px;">Aksi</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -43,7 +48,7 @@
                                         <?php echo ucfirst(htmlspecialchars($s['status'])); ?>
                                     </span>
                                 </td>
-                                <td style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <td style="display: flex; gap: 8px; flex-wrap: wrap; white-space: nowrap;">
                                     <a href="<?php echo BASEURL; ?>admin/schedules/edit/<?php echo $s['id']; ?>" class="btn btn-primary" style="padding: 6px 10px; font-size: 0.85rem;">Edit</a>
                                     <a href="<?php echo BASEURL; ?>admin/schedules/delete/<?php echo $s['id']; ?>" class="btn btn-danger" style="padding: 6px 10px; font-size: 0.85rem;" onclick="return confirm('Anda yakin ingin menghapus jadwal ini?')">Hapus</a>
                                 </td>
@@ -71,9 +76,17 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
+    .section h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #1f2937;
+        font-size: 1.3rem;
+    }
+
     .data-table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: auto;
     }
 
     .data-table thead {
@@ -81,16 +94,32 @@
     }
 
     .data-table th {
-        padding: 12px;
+        padding: 12px 15px;
         text-align: left;
         font-weight: 600;
         color: #374151;
         border-bottom: 2px solid #e5e7eb;
+        white-space: nowrap;
     }
 
     .data-table td {
-        padding: 12px;
+        padding: 12px 15px;
         border-bottom: 1px solid #e5e7eb;
         color: #374151;
+    }
+
+    .data-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    @media (max-width: 768px) {
+        .data-table {
+            font-size: 0.9rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 8px;
+        }
     }
 </style>

@@ -10,6 +10,7 @@ class AdminController extends Controller
     protected $scheduleModel;
     protected $bookingModel;
     protected $passengerModel;
+    protected $paymentModel;
 
     public function __construct()
     {
@@ -22,6 +23,7 @@ class AdminController extends Controller
         $this->scheduleModel = $this->model('ScheduleModel');
         $this->bookingModel = $this->model('BookingModel');
         $this->passengerModel = $this->model('PassengerModel');
+        $this->paymentModel = $this->model('PaymentModel');
         // Ensure session started
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -33,7 +35,14 @@ class AdminController extends Controller
     {
         // If admin is logged in, show dashboard
         if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
-            $this->renderDashboard('admin/dashboard');
+            $data = [
+                'total_buses' => $this->busModel->count(),
+                'total_users' => $this->userModel->count(),
+                'total_routes' => $this->routeModel->count(),
+                'payment_stats' => $this->paymentModel->getStatistics(),
+                'recent_bookings' => $this->bookingModel->getRecentBookings(5)
+            ];
+            $this->renderDashboard('admin/dashboard', $data);
             return;
         }
 
@@ -42,25 +51,7 @@ class AdminController extends Controller
         exit;
     }
 
-    // Helper to render with layout (reuse from HomeController if needed)
-    protected function renderWithLayout($view, $data = [])
-    {
-        extract($data);
-        ob_start();
-        if (file_exists('../app/Views/' . $view . '.php')) {
-            require_once '../app/Views/' . $view . '.php';
-        } else {
-            die('View does not exist: ' . $view);
-        }
-        $content = ob_get_clean();
-        if (file_exists('../app/Views/layouts/main.php')) {
-            require_once '../app/Views/layouts/main.php';
-        } else {
-            die('Layout does not exist');
-        }
-    }
-
-    // Render dashboard without header/footer
+    // Helper to render admin pages with sidebar
     protected function renderDashboard($view, $data = [])
     {
         extract($data);
@@ -68,7 +59,7 @@ class AdminController extends Controller
         // Check if view is dashboard - if so, include it directly (it has its own structure + CSS)
         if ($view === 'admin/dashboard') {
             // Dashboard has its own complete structure with sidebar and CSS
-            echo "<!DOCTYPE html>\n<html lang=\"id\">\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n    <title>Admin - Sinar Jaya</title>\n    <link href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\" rel=\"stylesheet\">\n</head>\n<body>\n";
+            echo "<!DOCTYPE html>\n<html lang=\"id\">\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n    <title>Admin - Sinar Jaya</title>\n    <link href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\" rel=\"stylesheet\">\n    <link href=\"" . BASEURL . "assets/css/admin-dashboard.css\" rel=\"stylesheet\">\n</head>\n<body>\n";
             $viewPath = '../app/Views/' . $view . '.php';
             if (file_exists($viewPath)) {
                 require_once $viewPath;
@@ -79,66 +70,34 @@ class AdminController extends Controller
             return;
         }
 
-        // For other admin views (buses, routes, etc), wrap with sidebar and dashboard CSS from dashboard.php
-        echo "<!DOCTYPE html>\n<html lang=\"id\">\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n    <title>Admin - Sinar Jaya</title>\n    <link href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\" rel=\"stylesheet\">\n</head>\n<body>\n";
+        // For other admin views (buses, routes, etc), wrap with sidebar
+        echo "<!DOCTYPE html>\n<html lang=\"id\">\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n    <title>Admin - Sinar Jaya</title>\n    <link href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\" rel=\"stylesheet\">\n    <link href=\"" . BASEURL . "assets/css/admin-dashboard.css\" rel=\"stylesheet\">\n</head>\n<body>\n";
 
-        // Output complete dashboard structure with CSS from dashboard.php
-        $dashboardPath = '../app/Views/admin/dashboard.php';
-        if (!file_exists($dashboardPath)) {
-            die('Dashboard template not found');
+        // Output dashboard structure with sidebar
+        echo "<div class=\"admin-dashboard\">\n";
+
+        // Include sidebar partial
+        $sidebarPath = '../app/Views/partials/admin_sidebar.php';
+        if (file_exists($sidebarPath)) {
+            include $sidebarPath;
         }
-
-        // Start capturing dashboard output (contains sidebar + CSS)
-        ob_start();
-        require_once $dashboardPath;
-        $dashboardHtml = ob_get_clean();
-
-        // Extract the opening <div class="admin-dashboard"> and CSS from dashboard.php
-        // Find where <style> starts and ends, extract everything up to </style>
-        $cssMatch = preg_match('/<style>(.*?)<\/style>/is', $dashboardHtml, $matches);
-        if ($cssMatch) {
-            $adminCss = $matches[1];
-        } else {
-            $adminCss = '';
-        }
-
-        // Echo the CSS
-        if (!empty($adminCss)) {
-            echo "<style>\n" . $adminCss . "\n</style>\n";
-        }
-
-        // Output sidebar structure from dashboard
-        echo "<div class=\"admin-dashboard\">";
-        echo "<div class=\"admin-sidebar\">";
-        echo "<div class=\"admin-sidebar-header\"><h2>Sinar Jaya</h2><p>Admin Panel</p></div>";
-        echo "<nav class=\"admin-nav\"><ul>";
-        echo "<li><a href=\"" . BASEURL . "admin\" class=\"" . (strpos($_SERVER['REQUEST_URI'], '/admin') !== false && strpos($_SERVER['REQUEST_URI'], '/admin/buses') === false && strpos($_SERVER['REQUEST_URI'], '/admin/routes') === false ? 'active' : '') . "\"><i class=\"fas fa-chart-line\"></i> Dashboard</a></li>";
-        echo "<li><a href=\"" . BASEURL . "admin/buses\" class=\"" . (strpos($_SERVER['REQUEST_URI'], '/admin/buses') !== false ? 'active' : '') . "\"><i class=\"fas fa-bus\"></i> Kelola Bus</a></li>";
-        echo "<li><a href=\"" . BASEURL . "admin/routes\" class=\"" . (strpos($_SERVER['REQUEST_URI'], '/admin/routes') !== false ? 'active' : '') . "\"><i class=\"fas fa-road\"></i> Kelola Rute</a></li>";
-        echo "<li><a href=\"" . BASEURL . "admin/schedules\"><i class=\"fas fa-calendar\"></i> Jadwal</a></li>";
-        echo "<li><a href=\"" . BASEURL . "admin/bookings\"><i class=\"fas fa-ticket-alt\"></i> Pemesanan</a></li>";
-        echo "<li><a href=\"" . BASEURL . "admin/payments\"><i class=\"fas fa-credit-card\"></i> Pembayaran</a></li>";
-        echo "<li><a href=\"" . BASEURL . "admin/users\"><i class=\"fas fa-users\"></i> Pengguna</a></li>";
-        echo "</ul></nav>";
-        echo "<div class=\"admin-sidebar-footer\"><a href=\"" . BASEURL . "auth/logout\" class=\"btn-logout\"><i class=\"fas fa-sign-out-alt\"></i> Logout</a></div>";
-        echo "</div>"; // end sidebar
 
         // Start main content area
-        echo "<div class=\"admin-content\">";
+        echo "<div class=\"admin-content\">\n";
 
         // Include the requested admin view inside the content area
         $viewPath = '../app/Views/' . $view . '.php';
         if (file_exists($viewPath)) {
-            require_once $viewPath;
+            include $viewPath;
         } else {
-            die('View does not exist: ' . $view);
+            echo "<div class=\"admin-body\"><p>View not found: " . htmlspecialchars($view) . "</p></div>";
         }
 
-        echo "</div>"; // end admin-content
-        echo "</div>"; // end admin-dashboard
+        echo "</div>\n"; // end admin-content
+        echo "</div>\n"; // end admin-dashboard
 
         // include admin scripts
-        echo "\n<script src=\"" . BASEURL . "assets/js/main.js\"></script>\n</body>\n</html>";
+        echo "<script src=\"" . BASEURL . "assets/js/main.js\"></script>\n</body>\n</html>";
     }
 
     /* -------------------------
@@ -248,14 +207,16 @@ class AdminController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['seat_number'])) {
             $seat_number = trim($_POST['seat_number']);
             $seat_type = trim($_POST['seat_type'] ?? 'regular');
-            $price_adjustment = floatval($_POST['price_adjustment'] ?? 0);
 
             if ($seat_number !== '') {
-                $this->seatModel->create($bus_id, $seat_number, $seat_type, $price_adjustment);
+                $this->seatModel->create($bus_id, $seat_number, $seat_type);
             }
             header('Location: ' . BASEURL . 'admin/buses/' . $bus_id . '/seats');
             exit;
         }
+
+        // Check and update expired bookings
+        $this->bookingModel->checkAndUpdateExpiredBookings();
 
         $seats = $this->seatModel->getByBus($bus_id);
         $data = ['bus' => $bus, 'seats' => $seats];
@@ -519,6 +480,38 @@ class AdminController extends Controller
         exit;
     }
 
+    /**
+     * Fix available_seats for all schedules
+     * Recalculates based on actual seat bookings
+     */
+    public function schedulesFixSeats()
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        // Release orphaned seats
+        $db = new Database();
+        $db->prepare('
+            SELECT s.id FROM seats s
+            LEFT JOIN passengers p ON s.id = p.seat_id
+            WHERE s.status = "booked" AND p.id IS NULL
+        ');
+        $orphaned_seats = $db->fetchAll();
+
+        foreach ($orphaned_seats as $seat) {
+            $this->seatModel->updateStatus($seat['id'], 'available');
+        }
+
+        // Fix all schedules
+        $fixed_ids = $this->scheduleModel->fixAllSchedulesAvailableSeats();
+
+        $_SESSION['success'] = 'Berhasil memperbaiki ' . count($fixed_ids) . ' jadwal dan melepas ' . count($orphaned_seats) . ' kursi yang tidak terpakai.';
+        header('Location: ' . BASEURL . 'admin/schedules');
+        exit;
+    }
+
     /* -------------------------
      * Booking management methods
      * - /admin/bookings -> bookings()
@@ -555,7 +548,32 @@ class AdminController extends Controller
     public function bookingsDelete($id = null)
     {
         if ($id) {
-            $this->bookingModel->delete($id);
+            // Get booking before delete
+            $booking = $this->bookingModel->findById($id);
+
+            if ($booking) {
+                // Release booked seats back to available
+                $passengers = $this->bookingModel->getPassengers($id);
+                $seat_ids = [];
+                foreach ($passengers as $passenger) {
+                    if (!empty($passenger['seat_id'])) {
+                        $seat_ids[] = $passenger['seat_id'];
+                    }
+                }
+                if (!empty($seat_ids)) {
+                    $this->seatModel->updateMultipleStatus($seat_ids, 'available');
+                }
+
+                // Restore available seats count
+                $schedule = $this->scheduleModel->findById($booking['schedule_id']);
+                if ($schedule) {
+                    $new_available = $schedule['available_seats'] + $booking['total_passengers'];
+                    $this->scheduleModel->update($booking['schedule_id'], array_merge($schedule, ['available_seats' => $new_available]));
+                }
+
+                // Delete booking (and passengers via cascade)
+                $this->bookingModel->delete($id);
+            }
         }
         header('Location: ' . BASEURL . 'admin/bookings');
         exit;
@@ -629,6 +647,391 @@ class AdminController extends Controller
             }
         }
         header('Location: ' . BASEURL . 'admin/bookings');
+        exit;
+    }
+
+    // ========================================
+    // Payment Management Methods
+    // ========================================
+    // URL: /admin/payments
+    public function payments($page = 1)
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        $page = max(1, intval($page));
+        $perPage = 10;
+        $offset = ($page - 1) * $perPage;
+
+        // Handle search
+        $search = trim($_GET['search'] ?? '');
+
+        if ($search) {
+            $payments = $this->paymentModel->search($search);
+            $total = count($payments);
+            $payments = array_slice($payments, $offset, $perPage);
+        } else {
+            $total = $this->paymentModel->count();
+            $payments = $this->paymentModel->getAll($perPage, $offset);
+        }
+
+        $totalPages = ceil($total / $perPage);
+        $statistics = $this->paymentModel->getStatistics();
+
+        $data = [
+            'payments' => $payments,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'total' => $total,
+            'search' => $search,
+            'statistics' => $statistics
+        ];
+
+        $this->renderDashboard('admin/payments/index', $data);
+    }
+
+    // URL: /admin/payments/{id}
+    public function paymentsView($id = null)
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        if (!$id) {
+            header('Location: ' . BASEURL . 'admin/payments');
+            exit;
+        }
+
+        $payment = $this->paymentModel->findById($id);
+        if (!$payment) {
+            header('Location: ' . BASEURL . 'admin/payments');
+            exit;
+        }
+
+        // Handle approval/rejection/refund
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+            $action = $_POST['action'];
+
+            if ($action === 'approve') {
+                $this->paymentModel->approvePayment($id);
+                if ($payment['booking_id']) {
+                    $this->bookingModel->update($payment['booking_id'], ['booking_status' => 'confirmed']);
+                }
+                header('Location: ' . BASEURL . 'admin/payments/' . $id);
+                exit;
+            } elseif ($action === 'reject') {
+                $reason = trim($_POST['reason'] ?? 'Pembayaran ditolak');
+                $this->paymentModel->rejectPayment($id, $reason);
+
+                // Release booked seats back to available
+                if ($payment['booking_id']) {
+                    $passengers = $this->bookingModel->getPassengers($payment['booking_id']);
+                    $seat_ids = [];
+                    foreach ($passengers as $passenger) {
+                        if (!empty($passenger['seat_id'])) {
+                            $seat_ids[] = $passenger['seat_id'];
+                        }
+                    }
+                    if (!empty($seat_ids)) {
+                        $this->seatModel->updateMultipleStatus($seat_ids, 'available');
+                    }
+                }
+
+                header('Location: ' . BASEURL . 'admin/payments/' . $id);
+                exit;
+            } elseif ($action === 'refund') {
+                $reason = trim($_POST['refund_reason'] ?? 'Pengembalian dana');
+                $this->paymentModel->refundPayment($id, $reason);
+                if ($payment['booking_id']) {
+                    $this->bookingModel->update($payment['booking_id'], ['booking_status' => 'cancelled']);
+
+                    // Release booked seats back to available
+                    $passengers = $this->bookingModel->getPassengers($payment['booking_id']);
+                    $seat_ids = [];
+                    foreach ($passengers as $passenger) {
+                        if (!empty($passenger['seat_id'])) {
+                            $seat_ids[] = $passenger['seat_id'];
+                        }
+                    }
+                    if (!empty($seat_ids)) {
+                        $this->seatModel->updateMultipleStatus($seat_ids, 'available');
+                    }
+                }
+                header('Location: ' . BASEURL . 'admin/payments/' . $id);
+                exit;
+            }
+        }
+
+        $data = ['payment' => $payment];
+        $this->renderDashboard('admin/payments/show', $data);
+    }
+
+    // URL: /admin/payments/create
+    public function paymentsCreate()
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        $bookings = $this->bookingModel->getAllPending();
+        $data = ['bookings' => $bookings];
+        $this->renderDashboard('admin/payments/form', $data);
+    }
+
+    // URL: /admin/payments/store
+    public function paymentsStore()
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASEURL . 'admin/payments/create');
+            exit;
+        }
+
+        $booking_id = intval($_POST['booking_id'] ?? 0);
+        $payment_method = trim($_POST['payment_method'] ?? '');
+        $payment_code = trim($_POST['payment_code'] ?? '');
+        $amount = floatval($_POST['amount'] ?? 0);
+
+        if (!$booking_id || !$payment_method || !$amount) {
+            $_SESSION['error'] = 'Semua field harus diisi';
+            header('Location: ' . BASEURL . 'admin/payments/create');
+            exit;
+        }
+
+        $booking = $this->bookingModel->findById($booking_id);
+        if (!$booking) {
+            $_SESSION['error'] = 'Booking tidak ditemukan';
+            header('Location: ' . BASEURL . 'admin/payments/create');
+            exit;
+        }
+
+        $paymentData = compact('booking_id', 'payment_method', 'payment_code', 'amount');
+        $paymentData['payment_status'] = 'pending';
+
+        if ($this->paymentModel->create($paymentData)) {
+            $_SESSION['success'] = 'Pembayaran berhasil dibuat';
+            header('Location: ' . BASEURL . 'admin/payments');
+        } else {
+            $_SESSION['error'] = 'Gagal membuat pembayaran';
+            header('Location: ' . BASEURL . 'admin/payments/create');
+        }
+        exit;
+    }
+
+    // URL: /admin/payments/{id}/edit
+    public function paymentsEdit($id = null)
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        if (!$id) {
+            header('Location: ' . BASEURL . 'admin/payments');
+            exit;
+        }
+
+        $payment = $this->paymentModel->findById($id);
+        if (!$payment) {
+            header('Location: ' . BASEURL . 'admin/payments');
+            exit;
+        }
+
+        $data = ['payment' => $payment];
+        $this->renderDashboard('admin/payments/form', $data);
+    }
+
+    // URL: /admin/payments/{id}/update
+    public function paymentsUpdate($id = null)
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        if (!$id) {
+            header('Location: ' . BASEURL . 'admin/payments');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASEURL . 'admin/payments/' . $id);
+            exit;
+        }
+
+        $payment_method = trim($_POST['payment_method'] ?? '');
+        $payment_code = trim($_POST['payment_code'] ?? '');
+        $amount = floatval($_POST['amount'] ?? 0);
+
+        if (!$payment_method || !$amount) {
+            $_SESSION['error'] = 'Semua field harus diisi';
+            header('Location: ' . BASEURL . 'admin/payments/' . $id . '/edit');
+            exit;
+        }
+
+        $paymentData = compact('payment_method', 'payment_code', 'amount');
+
+        if ($this->paymentModel->update($id, $paymentData)) {
+            $_SESSION['success'] = 'Pembayaran berhasil diperbarui';
+            header('Location: ' . BASEURL . 'admin/payments/' . $id);
+        } else {
+            $_SESSION['error'] = 'Gagal memperbarui pembayaran';
+            header('Location: ' . BASEURL . 'admin/payments/' . $id . '/edit');
+        }
+        exit;
+    }
+
+    // URL: /admin/payments/{id}/delete
+    public function paymentsDelete($id = null)
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        if ($id) {
+            $this->paymentModel->delete($id);
+            $_SESSION['success'] = 'Pembayaran berhasil dihapus';
+        }
+
+        header('Location: ' . BASEURL . 'admin/payments');
+        exit;
+    }
+
+    /* -------------------------
+     * User management methods
+     * URL patterns (via App routing):
+     * - /admin/users -> users()
+     * - /admin/users/create -> usersCreate()
+     * - /admin/users/edit/{id} -> usersEdit($id)
+     * - /admin/users/delete/{id} -> usersDelete($id)
+     */
+    public function users()
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        $search = $_GET['search'] ?? '';
+        if (!empty($search)) {
+            $users = $this->userModel->getFilteredVerifiedUsers($search);
+        } else {
+            $users = $this->userModel->getVerifiedUsers();
+        }
+
+        $data = [
+            'users' => $users,
+            'search' => $search
+        ];
+        $this->renderDashboard('admin/users/index', $data);
+    }
+
+    public function usersCreate()
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $data = [
+                'name' => trim($_POST['name'] ?? ''),
+                'email' => trim($_POST['email'] ?? ''),
+                'phone' => trim($_POST['phone'] ?? ''),
+                'password' => $_POST['password'] ?? '',
+                'role' => $_POST['role'] ?? 'user',
+                'is_verified' => isset($_POST['is_verified']) ? 1 : 0,
+            ];
+
+            // Basic validation
+            if (empty($data['name']) || empty($data['email']) || empty($data['password'])) {
+                // Handle error - maybe pass error message to view
+                $this->renderDashboard('admin/users/form', ['errors' => ['All fields except phone are required.'], 'old' => $data]);
+                return;
+            }
+
+            if ($this->userModel->create($data)) {
+                header('Location: ' . BASEURL . 'admin/users');
+                exit;
+            } else {
+                // Handle error
+                $this->renderDashboard('admin/users/form', ['errors' => ['Failed to create user.'], 'old' => $data]);
+                return;
+            }
+        }
+
+        $this->renderDashboard('admin/users/form');
+    }
+
+    public function usersEdit($id = null)
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin' || !$id) {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $data = [
+                'name' => trim($_POST['name'] ?? ''),
+                'email' => trim($_POST['email'] ?? ''),
+                'phone' => trim($_POST['phone'] ?? ''),
+                'password' => $_POST['password'] ?? '', // Password is optional on update
+                'role' => $_POST['role'] ?? 'user',
+                'is_verified' => isset($_POST['is_verified']) ? 1 : 0,
+            ];
+
+            if (empty($data['name']) || empty($data['email'])) {
+                $user = $this->userModel->findById($id);
+                $this->renderDashboard('admin/users/form', ['errors' => ['Name and Email are required.'], 'user' => $user]);
+                return;
+            }
+
+            if ($this->userModel->update($id, $data)) {
+                header('Location: ' . BASEURL . 'admin/users');
+                exit;
+            } else {
+                // Handle error
+                $user = $this->userModel->findById($id);
+                $this->renderDashboard('admin/users/form', ['errors' => ['Failed to update user.'], 'user' => $user]);
+                return;
+            }
+        }
+
+        $user = $this->userModel->findById($id);
+        if (!$user) {
+            header('Location: ' . BASEURL . 'admin/users');
+            exit;
+        }
+
+        $this->renderDashboard('admin/users/form', ['user' => $user]);
+    }
+
+    public function usersDelete($id = null)
+    {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin' || !$id) {
+            header('Location: ' . BASEURL . 'auth/login');
+            exit;
+        }
+
+        // to prevent admin from deleting themselves
+        if (isset($_SESSION['user_id']) && $id == $_SESSION['user_id']) {
+            // Cannot delete self, maybe set a flash message
+            header('Location: ' . BASEURL . 'admin/users');
+            exit;
+        }
+
+
+        $this->userModel->delete($id);
+        header('Location: ' . BASEURL . 'admin/users');
         exit;
     }
 }

@@ -21,9 +21,9 @@
             </div>
             <ul class="nav-menu">
                 <li><a href="<?php echo BASEURL; ?>" class="nav-link">Beranda</a></li>
-                <li><a href="<?php echo BASEURL; ?>/booking" class="nav-link">Pesan Tiket</a></li>
-                <li><a href="#tentang" class="nav-link">Tentang Kami</a></li>
-                <li><a href="#kontak" class="nav-link">Kontak</a></li>
+                <li><a href="<?php echo BASEURL; ?>home/search" class="nav-link">Pesan Tiket</a></li>
+                <li><a href="<?php echo BASEURL; ?>home/about" class="nav-link">Tentang Kami</a></li>
+                <li><a href="#footer-kontak" class="nav-link">Kontak</a></li>
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <li class="dropdown">
                         <a href="#" class="nav-link">Akun <i class="fas fa-chevron-down"></i></a>
@@ -37,6 +37,7 @@
                         </ul>
                     </li>
                 <?php else: ?>
+                    <li><a href="<?php echo BASEURL; ?>auth/register" class="nav-link btn-register">Register</a></li>
                     <li><a href="<?php echo BASEURL; ?>auth/login" class="nav-link btn-login">Login</a></li>
                 <?php endif; ?>
             </ul>
@@ -54,7 +55,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer" id="footer-kontak">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
@@ -69,7 +70,7 @@
                 <div class="footer-section">
                     <h4>Layanan</h4>
                     <ul>
-                        <li><a href="<?php echo BASEURL; ?>/booking">Pesan Tiket</a></li>
+                        <li><a href="#">Pesan Tiket</a></li>
                         <li><a href="#">Cek Jadwal</a></li>
                         <li><a href="#">Lacak Pesanan</a></li>
                     </ul>

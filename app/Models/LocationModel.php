@@ -64,4 +64,33 @@ class LocationModel
         $this->db->bind(':id', $id);
         return $this->db->execute();
     }
+
+    /**
+     * Get all unique cities for route selection
+     * 
+     * @return array Array of cities
+     */
+    public function getAllCities()
+    {
+        $this->db->prepare('SELECT DISTINCT city FROM location ORDER BY city ASC');
+        return $this->db->fetchAll();
+    }
+
+    /**
+     * Get cities that are origin or destination in active routes
+     * 
+     * @return array Array of cities with routes
+     */
+    public function getCitiesWithRoutes()
+    {
+        $this->db->prepare('
+            SELECT DISTINCT city FROM (
+                SELECT origin_city as city FROM routes WHERE status = "active"
+                UNION
+                SELECT destination_city as city FROM routes WHERE status = "active"
+            ) AS cities
+            ORDER BY city ASC
+        ');
+        return $this->db->fetchAll();
+    }
 }

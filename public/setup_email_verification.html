@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Setup Email Verification - Sinar Jaya</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 30px;
+      }
+
+      .step {
+        background: #f9fafb;
+        border-left: 4px solid #2563eb;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+      }
+
+      .step h2 {
+        color: #2563eb;
+        margin-bottom: 15px;
+        font-size: 20px;
+      }
+
+      .step-number {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        background: #2563eb;
+        color: white;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 30px;
+        margin-right: 10px;
+        font-weight: bold;
+      }
+
+      .status-box {
+        background: white;
+        border: 2px solid #e5e7eb;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      .status-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        background: #f9fafb;
+      }
+
+      .status-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        font-weight: bold;
+        font-size: 14px;
+      }
+
+      .status-icon.success {
+        background: #10b981;
+        color: white;
+      }
+
+      .status-icon.error {
+        background: #ef4444;
+        color: white;
+      }
+
+      .status-icon.warning {
+        background: #f59e0b;
+        color: white;
+      }
+
+      .status-text {
+        flex: 1;
+      }
+
+      .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+      }
+
+      .alert-warning {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        color: #92400e;
+      }
+
+      .alert-info {
+        background: #dbeafe;
+        border-left: 4px solid #2563eb;
+        color: #1e40af;
+      }
+
+      .alert-success {
+        background: #d1fae5;
+        border-left: 4px solid #10b981;
+        color: #065f46;
+      }
+
+      .alert-icon {
+        font-size: 24px;
+        margin-right: 15px;
+      }
+
+      .code-box {
+        background: #1f2937;
+        color: #10b981;
+        padding: 15px;
+        border-radius: 6px;
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+        overflow-x: auto;
+        margin: 15px 0;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        background: #2563eb;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+      }
+
+      .btn-secondary {
+        background: #6b7280;
+      }
+
+      .btn-secondary:hover {
+        background: #4b5563;
+      }
+
+      .btn-success {
+        background: #10b981;
+      }
+
+      .btn-success:hover {
+        background: #059669;
+      }
+
+      .link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .link:hover {
+        text-decoration: underline;
+      }
+
+      ul {
+        margin-left: 20px;
+        margin-top: 10px;
+        line-height: 1.8;
+      }
+
+      .instruction {
+        background: #f0f9ff;
+        padding: 15px;
+        border-radius: 6px;
+        margin: 10px 0;
+        border: 1px solid #bfdbfe;
+      }
+
+      .instruction ol {
+        margin-left: 20px;
+        margin-top: 10px;
+      }
+
+      .instruction li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+      }
+
+      .footer {
+        background: #f9fafb;
+        padding: 20px 30px;
+        text-align: center;
+        border-top: 1px solid #e5e7eb;
+        color: #6b7280;
+      }
+
+      .checklist {
+        margin: 20px 0;
+      }
+
+      .checklist-item {
+        padding: 12px;
+        margin-bottom: 8px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+      }
+
+      .checklist-item input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-right: 12px;
+        cursor: pointer;
+      }
+
+      .checklist-item label {
+        cursor: pointer;
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🚀 Setup Email Verification</h1>
+        <p>Panduan Setup Cepat - 8 Menit</p>
+      </div>
+
+      <div class="content">
+        <div class="alert alert-warning">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>PENTING:</strong> Email verification belum aktif! Anda harus
+            melakukan konfigurasi terlebih dahulu.
+          </div>
+        </div>
+
+        <div class="status-box">
+          <h3 style="margin-bottom: 15px; color: #374151">
+            📊 Status Konfigurasi Saat Ini
+          </h3>
+          <div id="statusContainer">
+            <p style="color: #6b7280">Memuat status...</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <h2>
+            <span class="step-number">1</span> Konfigurasi Email SMTP (5 menit)
+          </h2>
+
+          <div class="alert alert-info">
+            <span class="alert-icon">ℹ️</span>
+            <div>
+              Pilih salah satu provider email di bawah ini. Gmail adalah yang
+              paling mudah.
+            </div>
+          </div>
+
+          <h3 style="color: #374151; margin: 20px 0 10px 0">
+            📧 Opsi A: Gmail (Direkomendasikan)
+          </h3>
+
+          <div class="instruction">
+            <strong>Langkah mendapatkan App Password:</strong>
+            <ol>
+              <li>
+                Buka
+                <a
+                  href="https://myaccount.google.com/apppasswords"
+                  target="_blank"
+                  class="link"
+                  >Google App Passwords</a
+                >
+              </li>
+              <li>Login dengan akun Gmail Anda</li>
+              <li>Pilih "Mail" untuk aplikasi</li>
+              <li>Pilih "Windows Computer" untuk device</li>
+              <li>Klik "Generate"</li>
+              <li>
+                Copy 16-digit password (contoh:
+                <code>abcd efgh ijkl mnop</code>)
+              </li>
+            </ol>
+            <p style="margin-top: 10px; color: #92400e">
+              <strong>Catatan:</strong> Anda harus aktifkan 2-Factor
+              Authentication dulu!
+            </p>
+          </div>
+
+          <p style="margin: 15px 0">
+            <strong>Edit file:</strong> <code>app/config/config.php</code>
+          </p>
+
+          <div class="code-box">
+            // Cari baris ini:<br />
+            define('MAIL_USERNAME', 'your-email@gmail.com');<br />
+            define('MAIL_PASSWORD', 'your-app-password');<br />
+            <br />
+            // Ganti dengan:<br />
+            define('MAIL_USERNAME', 'email-anda@gmail.com');<br />
+            define('MAIL_PASSWORD', 'xxxx xxxx xxxx xxxx'); // App Password dari
+            Google
+          </div>
+
+          <details style="margin-top: 20px">
+            <summary
+              style="
+                cursor: pointer;
+                color: #2563eb;
+                font-weight: 600;
+                padding: 10px;
+                background: #f0f9ff;
+                border-radius: 6px;
+              "
+            >
+              📧 Opsi B: Provider Email Lain (Klik untuk expand)
+            </summary>
+            <div style="padding: 15px">
+              <p><strong>Outlook/Hotmail:</strong></p>
+              <div class="code-box">
+                define('MAIL_HOST', 'smtp.office365.com');<br />
+                define('MAIL_USERNAME', 'email-anda@outlook.com');<br />
+                define('MAIL_PASSWORD', 'password-anda');
+              </div>
+
+              <p style="margin-top: 15px"><strong>Yahoo Mail:</strong></p>
+              <div class="code-box">
+                define('MAIL_HOST', 'smtp.mail.yahoo.com');<br />
+                define('MAIL_USERNAME', 'email-anda@yahoo.com');<br />
+                define('MAIL_PASSWORD', 'app-password-anda');
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="step">
+          <h2><span class="step-number">2</span> Setup Database (2 menit)</h2>
+
+          <div class="instruction">
+            <strong>Jalankan SQL Migration:</strong>
+            <ol>
+              <li>
+                Buka
+                <a
+                  href="http://localhost/phpmyadmin"
+                  target="_blank"
+                  class="link"
+                  >PHPMyAdmin</a
+                >
+              </li>
+              <li>Pilih database <code>sinarjaya_db</code> di sidebar kiri</li>
+              <li>Klik tab "SQL" di atas</li>
+              <li>Copy SQL di bawah, paste, lalu klik "Go"</li>
+            </ol>
+          </div>
+
+          <div class="code-box" id="sqlCode">
+            ALTER TABLE `users` ADD COLUMN `verification_token` VARCHAR(255)
+            NULL DEFAULT NULL AFTER `is_verified`;<br />
+            ALTER TABLE `users` ADD INDEX `idx_verification_token`
+            (`verification_token`);<br />
+            ALTER TABLE `users` ADD INDEX `idx_is_verified` (`is_verified`);
+          </div>
+
+          <button class="btn btn-secondary" onclick="copySql()">
+            📋 Copy SQL
+          </button>
+          <a href="http://localhost/phpmyadmin" target="_blank" class="btn"
+            >🔗 Buka PHPMyAdmin</a
+          >
+        </div>
+
+        <div class="step">
+          <h2><span class="step-number">3</span> Test Konfigurasi (1 menit)</h2>
+
+          <p style="margin-bottom: 15px">
+            Setelah langkah 1 dan 2 selesai, test email configuration:
+          </p>
+
+          <a href="./test_email.html" target="_blank" class="btn btn-success"
+            >🧪 Test Email Configuration</a
+          >
+
+          <div class="instruction" style="margin-top: 20px">
+            <p><strong>Temporary Email untuk Testing:</strong></p>
+            <ul>
+              <li>
+                <a href="https://temp-mail.org" target="_blank" class="link"
+                  >temp-mail.org</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://www.mailinator.com"
+                  target="_blank"
+                  class="link"
+                  >mailinator.com</a
+                >
+              </li>
+              <li>
+                <a href="https://10minutemail.com" target="_blank" class="link"
+                  >10minutemail.com</a
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step">
+          <h2><span class="step-number">4</span> Test User Registration</h2>
+
+          <p style="margin-bottom: 15px">
+            Setelah test email berhasil, coba registrasi user baru:
+          </p>
+
+          <a href="../auth/register" class="btn">👤 Test Registrasi User</a>
+
+          <div class="instruction" style="margin-top: 20px">
+            <strong>Yang harus terjadi:</strong>
+            <ol>
+              <li>Isi form registrasi dengan email valid</li>
+              <li>Klik "Daftar Sekarang"</li>
+              <li>Muncul pesan "Silakan cek email Anda"</li>
+              <li>Buka email dan cek inbox (atau spam)</li>
+              <li>Klik link "Verifikasi Email"</li>
+              <li>Muncul halaman "Email berhasil diverifikasi!"</li>
+              <li>Sekarang bisa login</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="checklist">
+          <h3 style="color: #374151; margin-bottom: 15px">
+            ✅ Checklist Setup
+          </h3>
+
+          <div class="checklist-item">
+            <input type="checkbox" id="check1" />
+            <label for="check1">Dapat App Password dari Gmail</label>
+          </div>
+
+          <div class="checklist-item">
+            <input type="checkbox" id="check2" />
+            <label for="check2">Update MAIL_USERNAME di config.php</label>
+          </div>
+
+          <div class="checklist-item">
+            <input type="checkbox" id="check3" />
+            <label for="check3">Update MAIL_PASSWORD di config.php</label>
+          </div>
+
+          <div class="checklist-item">
+            <input type="checkbox" id="check4" />
+            <label for="check4">Jalankan SQL migration di PHPMyAdmin</label>
+          </div>
+
+          <div class="checklist-item">
+            <input type="checkbox" id="check5" />
+            <label for="check5">Test email di test_email.html (berhasil)</label>
+          </div>
+
+          <div class="checklist-item">
+            <input type="checkbox" id="check6" />
+            <label for="check6">Test registrasi user baru</label>
+          </div>
+
+          <div class="checklist-item">
+            <input type="checkbox" id="check7" />
+            <label for="check7">Terima email verifikasi</label>
+          </div>
+
+          <div class="checklist-item">
+            <input type="checkbox" id="check8" />
+            <label for="check8">Klik link verifikasi (berhasil)</label>
+          </div>
+        </div>
+
+        <div class="alert alert-success" style="margin-top: 30px">
+          <span class="alert-icon">🎉</span>
+          <div>
+            <strong>Setelah semua checklist selesai,</strong> email verification
+            sudah aktif dan siap digunakan!
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p><strong>Estimasi Waktu Total: 8 Menit</strong></p>
+        <p style="margin-top: 5px">
+          Status:
+          <span id="setupStatus" style="font-weight: bold; color: #f59e0b"
+            >⏸️ Menunggu Konfigurasi</span
+          >
+        </p>
+        <p style="margin-top: 10px; font-size: 12px">
+          Baca dokumentasi lengkap:
+          <a href="../SETUP_WAJIB_EMAIL_VERIFICATION.md" class="link"
+            >SETUP_WAJIB_EMAIL_VERIFICATION.md</a
+          >
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Load configuration status
+      window.addEventListener("load", function () {
+        checkStatus();
+        loadChecklistFromStorage();
+      });
+
+      function checkStatus() {
+        fetch("./test_email_config.php?action=check")
+          .then((response) => response.json())
+          .then((data) => {
+            let html = "";
+            let allConfigured = true;
+
+            if (data.config) {
+              for (let key in data.config) {
+                let config = data.config[key];
+                let status =
+                  config.status === "configured"
+                    ? "success"
+                    : config.status === "not_configured"
+                    ? "error"
+                    : "warning";
+                let icon =
+                  status === "success" ? "✓" : status === "warning" ? "⚠" : "✗";
+
+                if (status !== "success") {
+                  allConfigured = false;
+                }
+
+                html += `
+                                <div class="status-item">
+                                    <span class="status-icon ${status}">${icon}</span>
+                                    <div class="status-text">
+                                        <strong>${key}:</strong> ${
+                  config.value || "Belum dikonfigurasi"
+                }
+                                    </div>
+                                </div>
+                            `;
+              }
+
+              if (allConfigured) {
+                document.getElementById("setupStatus").innerHTML =
+                  "✅ Konfigurasi Lengkap";
+                document.getElementById("setupStatus").style.color = "#10b981";
+              }
+            }
+
+            document.getElementById("statusContainer").innerHTML =
+              html || "<p>Tidak dapat memuat status</p>";
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            document.getElementById("statusContainer").innerHTML =
+              '<div class="alert alert-warning"><span class="alert-icon">⚠️</span><div>Tidak dapat memuat status konfigurasi</div></div>';
+          });
+      }
+
+      function copySql() {
+        const sql = `ALTER TABLE \`users\` ADD COLUMN \`verification_token\` VARCHAR(255) NULL DEFAULT NULL AFTER \`is_verified\`;
+ALTER TABLE \`users\` ADD INDEX \`idx_verification_token\` (\`verification_token\`);
+ALTER TABLE \`users\` ADD INDEX \`idx_is_verified\` (\`is_verified\`);`;
+
+        navigator.clipboard
+          .writeText(sql)
+          .then(() => {
+            alert("✓ SQL berhasil di-copy! Paste di PHPMyAdmin.");
+          })
+          .catch(() => {
+            // Fallback
+            const textarea = document.createElement("textarea");
+            textarea.value = sql;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textarea);
+            alert("✓ SQL berhasil di-copy! Paste di PHPMyAdmin.");
+          });
+      }
+
+      // Save checklist state
+      document
+        .querySelectorAll('.checklist-item input[type="checkbox"]')
+        .forEach((checkbox) => {
+          checkbox.addEventListener("change", function () {
+            saveChecklistToStorage();
+            updateProgress();
+          });
+        });
+
+      function saveChecklistToStorage() {
+        const checkboxes = document.querySelectorAll(
+          '.checklist-item input[type="checkbox"]'
+        );
+        const states = Array.from(checkboxes).map((cb) => cb.checked);
+        localStorage.setItem("emailSetupChecklist", JSON.stringify(states));
+      }
+
+      function loadChecklistFromStorage() {
+        const saved = localStorage.getItem("emailSetupChecklist");
+        if (saved) {
+          const states = JSON.parse(saved);
+          const checkboxes = document.querySelectorAll(
+            '.checklist-item input[type="checkbox"]'
+          );
+          checkboxes.forEach((cb, i) => {
+            if (states[i] !== undefined) {
+              cb.checked = states[i];
+            }
+          });
+          updateProgress();
+        }
+      }
+
+      function updateProgress() {
+        const checkboxes = document.querySelectorAll(
+          '.checklist-item input[type="checkbox"]'
+        );
+        const total = checkboxes.length;
+        const checked = Array.from(checkboxes).filter(
+          (cb) => cb.checked
+        ).length;
+
+        if (checked === total) {
+          document.getElementById("setupStatus").innerHTML =
+            "🎉 Setup Selesai!";
+          document.getElementById("setupStatus").style.color = "#10b981";
+        } else {
+          const percentage = Math.round((checked / total) * 100);
+          document.getElementById(
+            "setupStatus"
+          ).innerHTML = `⏳ Progress: ${percentage}%`;
+          document.getElementById("setupStatus").style.color = "#f59e0b";
+        }
+      }
+    </script>
+  </body>
+</html>

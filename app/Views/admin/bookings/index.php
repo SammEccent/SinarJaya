@@ -30,16 +30,32 @@
                         <?php foreach ($bookings as $b): ?>
                             <tr>
                                 <td><?php echo $b['id']; ?></td>
-                                <td><?php echo htmlspecialchars($b['booking_code']); ?></td>
-                                <td><?php echo htmlspecialchars($b['user_name'] . ' <' . $b['user_email'] . '>'); ?></td>
-                                <td><?php echo htmlspecialchars($b['route_code'] . ' (' . $b['departure_datetime'] . ')'); ?></td>
-                                <td><?php echo htmlspecialchars($b['created_at']); ?></td>
-                                <td>Rp <?php echo number_format($b['total_amount'], 0, ',', '.'); ?></td>
-                                <td><?php echo htmlspecialchars(ucfirst($b['booking_status'])); ?></td>
-                                <td style="display:flex; gap:8px;">
-                                    <a href="<?php echo BASEURL; ?>admin/bookings/view/<?php echo $b['id']; ?>" class="btn btn-outline">Lihat</a>
-                                    <a href="<?php echo BASEURL; ?>admin/bookings/edit/<?php echo $b['id']; ?>" class="btn btn-primary">Edit</a>
-                                    <a href="<?php echo BASEURL; ?>admin/bookings/delete/<?php echo $b['id']; ?>" class="btn btn-danger" onclick="return confirm('Hapus pemesanan ini?')">Hapus</a>
+                                <td><strong><?php echo htmlspecialchars($b['booking_code']); ?></strong></td>
+                                <td><?php echo htmlspecialchars($b['user_name']); ?><br><small><?php echo htmlspecialchars($b['user_email']); ?></small></td>
+                                <td><?php echo htmlspecialchars($b['route_code']); ?><br><small><?php echo date('d-m-Y H:i', strtotime($b['departure_datetime'])); ?></small></td>
+                                <td><?php echo date('d-m-Y H:i', strtotime($b['created_at'])); ?></td>
+                                <td style="text-align: right;">Rp <?php echo number_format($b['total_amount'], 0, ',', '.'); ?></td>
+                                <td>
+                                    <?php
+                                        $status_class = 'badge-secondary'; // Default
+                                        if ($b['booking_status'] === 'confirmed') {
+                                            $status_class = 'badge-success';
+                                        } elseif ($b['booking_status'] === 'pending') {
+                                            $status_class = 'badge-warning';
+                                        } elseif ($b['booking_status'] === 'cancelled') {
+                                            $status_class = 'badge-danger';
+                                        } elseif ($b['booking_status'] === 'completed') {
+                                            $status_class = 'badge-info';
+                                        }
+                                    ?>
+                                    <span class="badge <?php echo $status_class; ?>">
+                                        <?php echo ucfirst(htmlspecialchars($b['booking_status'])); ?>
+                                    </span>
+                                </td>
+                                <td style="display:flex; gap:8px; white-space: nowrap;">
+                                    <a href="<?php echo BASEURL; ?>admin/bookings/view/<?php echo $b['id']; ?>" class="btn btn-outline" style="padding: 6px 10px; font-size: 0.85rem;">Lihat</a>
+                                    <a href="<?php echo BASEURL; ?>admin/bookings/edit/<?php echo $b['id']; ?>" class="btn btn-primary" style="padding: 6px 10px; font-size: 0.85rem;">Edit</a>
+                                    <a href="<?php echo BASEURL; ?>admin/bookings/delete/<?php echo $b['id']; ?>" class="btn btn-danger" style="padding: 6px 10px; font-size: 0.85rem;" onclick="return confirm('Hapus pemesanan ini?')">Hapus</a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -63,14 +79,48 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
+    .section h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #1f2937;
+        font-size: 1.3rem;
+    }
+
     .data-table {
         width: 100%;
         border-collapse: collapse;
     }
 
-    .data-table th,
+    .data-table thead {
+        background-color: #f3f4f6;
+    }
+
+    .data-table th {
+        padding: 12px 15px;
+        text-align: left;
+        color: #374151;
+        font-weight: 600;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
     .data-table td {
-        padding: 12px;
+        padding: 12px 15px;
         border-bottom: 1px solid #e5e7eb;
+        color: #374151;
+    }
+
+    .data-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    @media (max-width: 768px) {
+        .data-table {
+            font-size: 0.9rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 8px;
+        }
     }
 </style>

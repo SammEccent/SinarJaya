@@ -31,6 +31,12 @@ class App
                 // we handled routing, so skip the usual param extraction below by setting controllerIndex beyond
                 $controllerIndex += 3;
             }
+            // Support pattern: resource/{id} -> resourceView(id)
+            elseif (isset($url[$controllerIndex + 1]) && is_numeric($url[$controllerIndex + 1]) && method_exists($this->controller, $url[$controllerIndex] . 'View')) {
+                $this->method = $url[$controllerIndex] . 'View';
+                $this->params = [$url[$controllerIndex + 1]];
+                $controllerIndex += 2;
+            }
             // Try compound method first (e.g., buses + create -> busesCreate)
             elseif (isset($url[$controllerIndex + 1]) && method_exists($this->controller, $url[$controllerIndex] . ucfirst($url[$controllerIndex + 1]))) {
                 $this->method = $url[$controllerIndex] . ucfirst($url[$controllerIndex + 1]);

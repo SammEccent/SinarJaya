@@ -43,10 +43,6 @@
                     <option value="Sleeper seat">Sleeper seat</option>
                 </select>
             </div>
-            <div>
-                <label for="price_adjustment" style="display: block; font-weight: 600; margin-bottom: 8px; color: #1f2937;">Harga Tambahan</label>
-                <input type="number" id="price_adjustment" name="price_adjustment" placeholder="0" step="1000" min="0" style="width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 1rem;" />
-            </div>
             <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
                 <i class="fas fa-plus"></i> Tambah
             </button>
@@ -64,7 +60,6 @@
                         <tr>
                             <th>Nomor Kursi</th>
                             <th>Tipe</th>
-                            <th>Harga Tambahan</th>
                             <th>Status</th>
                             <th>Aksi</th>
                         </tr>
@@ -90,13 +85,6 @@
                                     }
                                     ?>
                                     <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 500; background: <?php echo $styleBg; ?>; color: <?php echo $styleColor; ?>; "><?php echo $label; ?></span>
-                                </td>
-                                <td>
-                                    <?php if (!empty($seat['price_adjustment']) && $seat['price_adjustment'] > 0): ?>
-                                        <span style="color: #10b981; font-weight: 600;">+ Rp<?php echo number_format($seat['price_adjustment'], 0, ',', '.'); ?></span>
-                                    <?php else: ?>
-                                        <span style="color: #6b7280;">-</span>
-                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if ($seat['status'] === 'available'): ?>
