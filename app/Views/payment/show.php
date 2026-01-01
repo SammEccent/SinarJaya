@@ -368,8 +368,8 @@
             </a>
         <?php endif; ?>
 
-        <a href="<?php echo BASEURL; ?>booking/detail/<?php echo $payment['booking_id']; ?>" class="btn btn-secondary">
-            <i class="fas fa-eye"></i> Lihat Booking
+        <a href="<?php echo BASEURL; ?>user/bookings" class="btn btn-secondary">
+            <i class="fas fa-list"></i> Pesanan Saya
         </a>
     </div>
 </div>

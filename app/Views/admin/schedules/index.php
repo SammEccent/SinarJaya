@@ -25,6 +25,7 @@
                             <th>ID</th>
                             <th>Bus</th>
                             <th>Rute</th>
+                            <th>Jenis Arus</th>
                             <th>Berangkat</th>
                             <th>Tiba</th>
                             <th>Harga</th>
@@ -39,6 +40,11 @@
                                 <td><?php echo htmlspecialchars($s['id']); ?></td>
                                 <td><?php echo htmlspecialchars($s['plate_number'] ?? '-'); ?></td>
                                 <td><?php echo htmlspecialchars(($s['route_code'] ?? '-') . ' (' . ($s['origin_city'] ?? '') . ' - ' . ($s['destination_city'] ?? '') . ')'); ?></td>
+                                <td>
+                                    <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 500; <?php echo (($s['route_type'] ?? 'forward') === 'forward') ? 'background: #dbeafe; color: #1e40af;' : 'background: #fef3c7; color: #92400e;'; ?>">
+                                        <?php echo (($s['route_type'] ?? 'forward') === 'forward') ? 'Berangkat' : 'Balik'; ?>
+                                    </span>
+                                </td>
                                 <td><?php echo htmlspecialchars($s['departure_datetime']); ?></td>
                                 <td><?php echo htmlspecialchars($s['arrival_datetime']); ?></td>
                                 <td>Rp <?php echo number_format($s['base_price'] ?? 0, 0, ',', '.'); ?></td>

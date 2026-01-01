@@ -7,7 +7,7 @@
 
 <div class="admin-body">
     <div class="section" style="max-width: 600px;">
-        <?php if (!empty($errors)): ?>
+        <?php if (!empty($errors) && is_array($errors)): ?>
             <div style="background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #ef4444;">
                 <strong>Kesalahan:</strong>
                 <ul style="margin: 10px 0 0 20px; padding: 0;">

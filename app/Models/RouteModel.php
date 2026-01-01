@@ -151,4 +151,46 @@ class RouteModel
         $result = $this->db->fetch();
         return $result['total'] ?? 0;
     }
+
+    /**
+     * Get popular routes based on number of schedules
+     * 
+     * @param int $limit Maximum number of routes to return
+     * @return array Array of popular routes with schedule count and price info
+     */
+    public function getPopularRoutes($limit = 2)
+    {
+        $this->db->prepare("
+            SELECT 
+                r.route_id,
+                r.origin_city,
+                r.destination_city,
+                r.route_code,
+                COUNT(s.id) as schedule_count,
+                MIN(s.base_price * bc.base_price_multiplier) as min_price,
+                MIN(TIMESTAMPDIFF(MINUTE, s.departure_datetime, s.arrival_datetime)) as min_duration_minutes
+            FROM routes r
+            LEFT JOIN schedules s ON r.route_id = s.route_id AND s.status = 'scheduled'
+            LEFT JOIN buses b ON s.bus_id = b.id
+            LEFT JOIN bus_classes bc ON b.bus_class_id = bc.id
+            WHERE r.status = 'active'
+            AND NOT EXISTS (
+                -- Exclude jika sudah ada rute dengan pasangan kota yang sama dan route_id lebih kecil
+                SELECT 1 FROM routes r2
+                WHERE r2.status = 'active'
+                AND r2.route_id < r.route_id
+                AND (
+                    (r2.origin_city = r.origin_city AND r2.destination_city = r.destination_city)
+                    OR
+                    (r2.origin_city = r.destination_city AND r2.destination_city = r.origin_city)
+                )
+            )
+            GROUP BY r.route_id, r.origin_city, r.destination_city, r.route_code
+            HAVING schedule_count > 0
+            ORDER BY schedule_count DESC, min_price ASC
+            LIMIT :limit
+        ");
+        $this->db->bind(':limit', $limit);
+        return $this->db->fetchAll();
+    }
 }

@@ -21,7 +21,7 @@
             </div>
             <ul class="nav-menu">
                 <li><a href="<?php echo BASEURL; ?>" class="nav-link">Beranda</a></li>
-                <li><a href="<?php echo BASEURL; ?>home/search" class="nav-link">Pesan Tiket</a></li>
+                <li><a href="<?php echo BASEURL; ?>#search-section" class="nav-link">Pesan Tiket</a></li>
                 <li><a href="<?php echo BASEURL; ?>home/about" class="nav-link">Tentang Kami</a></li>
                 <li><a href="#footer-kontak" class="nav-link">Kontak</a></li>
                 <?php if (isset($_SESSION['user_id'])): ?>

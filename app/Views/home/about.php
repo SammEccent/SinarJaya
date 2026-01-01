@@ -138,80 +138,6 @@
                     <li>Premium facilities</li>
                 </ul>
             </div>
-            <div class="fleet-card">
-                <div class="fleet-icon">
-                    <i class="fas fa-chair"></i>
-                </div>
-                <h3>Economy</h3>
-                <ul>
-                    <li>Kursi standar (2-2)</li>
-                    <li>AC standar</li>
-                    <li>Harga terjangkau</li>
-                    <li>Rute kota-kota besar</li>
-                    <li>Tetap nyaman</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Statistics Section -->
-<section class="statistics">
-    <div class="container">
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-number">30+</div>
-                <div class="stat-label">Tahun Pengalaman</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">150+</div>
-                <div class="stat-label">Armada Bus</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">50+</div>
-                <div class="stat-label">Rute Tersedia</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">5M+</div>
-                <div class="stat-label">Penumpang Dilayani</div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Contact CTA Section -->
-<section class="contact-cta">
-    <div class="container">
-        <h2>Hubungi Kami</h2>
-        <p>Memiliki pertanyaan atau butuh bantuan? Tim kami siap membantu Anda</p>
-        <div class="contact-info">
-            <div class="contact-item">
-                <i class="fas fa-phone"></i>
-                <div>
-                    <strong>Telepon</strong>
-                    <p>(021) 123-4567</p>
-                </div>
-            </div>
-            <div class="contact-item">
-                <i class="fas fa-envelope"></i>
-                <div>
-                    <strong>Email</strong>
-                    <p>info@sinarjaya.co.id</p>
-                </div>
-            </div>
-            <div class="contact-item">
-                <i class="fas fa-map-marker-alt"></i>
-                <div>
-                    <strong>Alamat</strong>
-                    <p>Jl. Raya Utama No. 123, Jakarta</p>
-                </div>
-            </div>
-        </div>
-        <div class="social-links">
-            <a href="#" class="social-icon"><i class="fab fa-facebook"></i></a>
-            <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
-            <a href="#" class="social-icon"><i class="fab fa-youtube"></i></a>
         </div>
     </div>
 </section>
@@ -411,9 +337,12 @@
 
     .fleet-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 30px;
         margin-top: 50px;
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .fleet-card {

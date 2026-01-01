@@ -206,6 +206,13 @@
         justify-content: center;
     }
 
+    .seat-empty {
+        background: transparent;
+        border: none;
+        pointer-events: none;
+        aspect-ratio: 1;
+    }
+
     .toilet-section {
         display: grid;
         grid-template-columns: 1fr 1fr 20px 1fr 1fr;
@@ -647,44 +654,26 @@
                             <?php endif; ?>
 
                         <?php else:
-                            // Regular layout: 2-2
-                            // Check if this is row 8 (special layout with toilet)
-                            $isRow8 = ($rowNum == 8);
+                            // Regular layout: 2-2 (Executive)
+                            // Toilet should be at bottom left (after row 7, position A-B)
+                            $maxRow = max(array_keys($seatsByRow));
+                            $isLastRow = ($rowNum == $maxRow);
                         ?>
-                            <?php if ($isRow8): ?>
-                                <!-- Row 8: Toilet on left, seats 8C and 8D on right -->
-                                <div class="toilet-section">
+                            <!-- Regular row: 2 seats on left, aisle, 2 seats on right -->
+                            <div class="seat-row with-aisle">
+                                <?php
+                                // For last row, show toilet instead of seats A and B
+                                if ($isLastRow):
+                                    // Show toilet box (left side, position A)
+                                ?>
                                     <div class="toilet-box">
                                         <i class="fas fa-restroom"></i>
                                         <span>Toilet</span>
                                     </div>
-                                    <div class="aisle"></div>
-                                    <?php
-                                    // Render only seats C and D for row 8
-                                    foreach (['C', 'D'] as $pos):
-                                        if (isset($rowSeats[$pos])):
-                                            $seat = $rowSeats[$pos];
-                                            $statusClass = $seat['booking_status'];
-                                            $disabled = ($statusClass !== 'available') ? 'disabled' : '';
-                                    ?>
-                                            <div class="seat <?php echo $statusClass; ?>"
-                                                data-seat-id="<?php echo $seat['id']; ?>"
-                                                data-seat-number="<?php echo htmlspecialchars($seat['seat_number']); ?>"
-                                                data-seat-type="<?php echo htmlspecialchars($seat['seat_type']); ?>"
-                                                <?php echo $disabled; ?>>
-                                                <i class="fas fa-chair"></i>
-                                                <span class="seat-number"><?php echo htmlspecialchars($seat['seat_number']); ?></span>
-                                            </div>
-                                    <?php
-                                        endif;
-                                    endforeach;
-                                    ?>
-                                </div>
-                            <?php else: ?>
-                                <!-- Regular row: 2 seats on left, aisle, 2 seats on right -->
-                                <div class="seat-row with-aisle">
-                                    <?php
-                                    // Render seats A and B (left side)
+                                    <!-- Empty space for position B -->
+                                    <div class="seat-empty"></div>
+                                    <?php else:
+                                    // Render seats A and B (left side) for non-last rows
                                     foreach (['A', 'B'] as $pos):
                                         if (isset($rowSeats[$pos])):
                                             $seat = $rowSeats[$pos];
@@ -699,36 +688,36 @@
                                                 <i class="fas fa-chair"></i>
                                                 <span class="seat-number"><?php echo htmlspecialchars($seat['seat_number']); ?></span>
                                             </div>
-                                    <?php
+                                <?php
                                         endif;
                                     endforeach;
-                                    ?>
+                                endif;
+                                ?>
 
-                                    <!-- Aisle -->
-                                    <div class="aisle"></div>
+                                <!-- Aisle -->
+                                <div class="aisle"></div>
 
-                                    <?php
-                                    // Render seats C and D (right side)
-                                    foreach (['C', 'D'] as $pos):
-                                        if (isset($rowSeats[$pos])):
-                                            $seat = $rowSeats[$pos];
-                                            $statusClass = $seat['booking_status'];
-                                            $disabled = ($statusClass !== 'available') ? 'disabled' : '';
-                                    ?>
-                                            <div class="seat <?php echo $statusClass; ?>"
-                                                data-seat-id="<?php echo $seat['id']; ?>"
-                                                data-seat-number="<?php echo htmlspecialchars($seat['seat_number']); ?>"
-                                                data-seat-type="<?php echo htmlspecialchars($seat['seat_type']); ?>"
-                                                <?php echo $disabled; ?>>
-                                                <i class="fas fa-chair"></i>
-                                                <span class="seat-number"><?php echo htmlspecialchars($seat['seat_number']); ?></span>
-                                            </div>
-                                    <?php
-                                        endif;
-                                    endforeach;
-                                    ?>
-                                </div>
-                            <?php endif; ?>
+                                <?php
+                                // Always render seats C and D (right side) for all rows
+                                foreach (['C', 'D'] as $pos):
+                                    if (isset($rowSeats[$pos])):
+                                        $seat = $rowSeats[$pos];
+                                        $statusClass = $seat['booking_status'];
+                                        $disabled = ($statusClass !== 'available') ? 'disabled' : '';
+                                ?>
+                                        <div class="seat <?php echo $statusClass; ?>"
+                                            data-seat-id="<?php echo $seat['id']; ?>"
+                                            data-seat-number="<?php echo htmlspecialchars($seat['seat_number']); ?>"
+                                            data-seat-type="<?php echo htmlspecialchars($seat['seat_type']); ?>"
+                                            <?php echo $disabled; ?>>
+                                            <i class="fas fa-chair"></i>
+                                            <span class="seat-number"><?php echo htmlspecialchars($seat['seat_number']); ?></span>
+                                        </div>
+                                <?php
+                                    endif;
+                                endforeach;
+                                ?>
+                            </div>
                         <?php endif; ?>
                     <?php endforeach; ?>
                 </div>

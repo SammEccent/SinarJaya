@@ -104,46 +104,40 @@
     <div class="container">
         <h2>Rute Populer</h2>
         <div class="routes-grid">
-            <div class="route-card">
-                <div class="route-header">
-                    <span class="route-from">Jakarta</span>
-                    <i class="fas fa-arrow-right"></i>
-                    <span class="route-to">Bandung</span>
+            <?php if (!empty($popularRoutes)): ?>
+                <?php foreach ($popularRoutes as $route): ?>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="route-from"><?php echo htmlspecialchars($route['origin_city']); ?></span>
+                            <i class="fas fa-arrow-right"></i>
+                            <span class="route-to"><?php echo htmlspecialchars($route['destination_city']); ?></span>
+                        </div>
+                        <p class="route-info">
+                            <?php
+                            $hours = floor($route['min_duration_minutes'] / 60);
+                            $minutes = $route['min_duration_minutes'] % 60;
+                            echo "~{$hours} jam";
+                            if ($minutes > 0) echo " {$minutes} menit";
+                            echo " perjalanan";
+                            ?>
+                        </p>
+                        <p class="route-price">Mulai dari <strong>Rp <?php echo number_format($route['min_price'], 0, ',', '.'); ?></strong></p>
+                        <a href="<?php echo BASEURL; ?>home/search?origin=<?php echo urlencode($route['origin_city']); ?>&destination=<?php echo urlencode($route['destination_city']); ?>&departure=<?php echo date('Y-m-d', strtotime('+1 day')); ?>&passengers=1" class="btn btn-outline">Pesan Sekarang</a>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <!-- Fallback jika tidak ada rute populer -->
+                <div class="route-card">
+                    <div class="route-header">
+                        <span class="route-from">Yogyakarta</span>
+                        <i class="fas fa-arrow-right"></i>
+                        <span class="route-to">Tangerang</span>
+                    </div>
+                    <p class="route-info">~10 jam perjalanan</p>
+                    <p class="route-price">Mulai dari <strong>Rp 160.000</strong></p>
+                    <a href="<?php echo BASEURL; ?>home/search?origin=Yogyakarta&destination=Tangerang&departure=<?php echo date('Y-m-d', strtotime('+1 day')); ?>&passengers=1" class="btn btn-outline">Pesan Sekarang</a>
                 </div>
-                <p class="route-info">~3 jam perjalanan</p>
-                <p class="route-price">Mulai dari <strong>Rp 150.000</strong></p>
-                <a href="<?php echo BASEURL; ?>booking" class="btn btn-outline">Pesan Sekarang</a>
-            </div>
-            <div class="route-card">
-                <div class="route-header">
-                    <span class="route-from">Jakarta</span>
-                    <i class="fas fa-arrow-right"></i>
-                    <span class="route-to">Yogyakarta</span>
-                </div>
-                <p class="route-info">~10 jam perjalanan</p>
-                <p class="route-price">Mulai dari <strong>Rp 350.000</strong></p>
-                <a href="<?php echo BASEURL; ?>booking" class="btn btn-outline">Pesan Sekarang</a>
-            </div>
-            <div class="route-card">
-                <div class="route-header">
-                    <span class="route-from">Bandung</span>
-                    <i class="fas fa-arrow-right"></i>
-                    <span class="route-to">Surabaya</span>
-                </div>
-                <p class="route-info">~8 jam perjalanan</p>
-                <p class="route-price">Mulai dari <strong>Rp 300.000</strong></p>
-                <a href="<?php echo BASEURL; ?>booking" class="btn btn-outline">Pesan Sekarang</a>
-            </div>
-            <div class="route-card">
-                <div class="route-header">
-                    <span class="route-from">Jakarta</span>
-                    <i class="fas fa-arrow-right"></i>
-                    <span class="route-to">Semarang</span>
-                </div>
-                <p class="route-info">~6 jam perjalanan</p>
-                <p class="route-price">Mulai dari <strong>Rp 250.000</strong></p>
-                <a href="<?php echo BASEURL; ?>/booking" class="btn btn-outline">Pesan Sekarang</a>
-            </div>
+            <?php endif; ?>
         </div>
     </div>
 </section>
@@ -196,14 +190,5 @@
                 </div>
             </div>
         </div>
-    </div>
-</section>
-
-<!-- CTA Section -->
-<section class="cta-section">
-    <div class="container">
-        <h2>Siap untuk Perjalanan Berikutnya?</h2>
-        <p>Jangan lewatkan penawaran spesial kami. Pesan tiket sekarang dan nikmati diskon hingga 20%!</p>
-        <a href="<?php echo BASEURL; ?>booking" class="btn btn-primary btn-lg">Pesan Tiket Sekarang</a>
     </div>
 </section>

@@ -389,6 +389,9 @@ class AdminController extends Controller
             exit;
         }
 
+        // Auto-update status jadwal yang sudah berangkat
+        $this->scheduleModel->updateDepartedSchedules();
+
         $schedules = $this->scheduleModel->getAll();
         $data = ['schedules' => $schedules];
         $this->renderDashboard('admin/schedules/index', $data);
@@ -399,6 +402,7 @@ class AdminController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $bus_id = intval($_POST['bus_id'] ?? 0);
             $route_id = intval($_POST['route_id'] ?? 0);
+            $route_type = $_POST['route_type'] ?? 'forward';
             $departure_datetime = trim($_POST['departure_datetime'] ?? '');
             $arrival_datetime = trim($_POST['arrival_datetime'] ?? '');
             $base_price = floatval($_POST['base_price'] ?? 0);
@@ -414,15 +418,29 @@ class AdminController extends Controller
             if ($base_price <= 0) $errors[] = 'Harga dasar harus lebih dari 0.';
             if ($available_seats <= 0) $errors[] = 'Jumlah kursi tersedia harus lebih dari 0.';
 
+            // Validate bus schedule and route type
+            if (empty($errors)) {
+                $validation = $this->scheduleModel->validateBusSchedule(
+                    $bus_id,
+                    $route_id,
+                    $departure_datetime,
+                    $route_type
+                );
+
+                if (!$validation['valid']) {
+                    $errors[] = $validation['message'];
+                }
+            }
+
             if (!empty($errors)) {
                 $buses = $this->busModel->getAll();
                 $routes = $this->routeModel->getAll();
-                $data = ['errors' => $errors, 'old' => compact('bus_id', 'route_id', 'departure_datetime', 'arrival_datetime', 'base_price', 'available_seats', 'status', 'notes'), 'buses' => $buses, 'routes' => $routes];
+                $data = ['errors' => $errors, 'old' => compact('bus_id', 'route_id', 'route_type', 'departure_datetime', 'arrival_datetime', 'base_price', 'available_seats', 'status', 'notes'), 'buses' => $buses, 'routes' => $routes];
                 $this->renderDashboard('admin/schedules/form', $data);
                 return;
             }
 
-            $this->scheduleModel->create(compact('bus_id', 'route_id', 'departure_datetime', 'arrival_datetime', 'base_price', 'available_seats', 'status', 'notes'));
+            $this->scheduleModel->create(compact('bus_id', 'route_id', 'route_type', 'departure_datetime', 'arrival_datetime', 'base_price', 'available_seats', 'status', 'notes'));
             header('Location: ' . BASEURL . 'admin/schedules');
             exit;
         }
@@ -447,6 +465,7 @@ class AdminController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $bus_id = intval($_POST['bus_id'] ?? 0);
             $route_id = intval($_POST['route_id'] ?? 0);
+            $route_type = $_POST['route_type'] ?? 'forward';
             $departure_datetime = trim($_POST['departure_datetime'] ?? '');
             $arrival_datetime = trim($_POST['arrival_datetime'] ?? '');
             $base_price = floatval($_POST['base_price'] ?? 0);
@@ -454,7 +473,30 @@ class AdminController extends Controller
             $status = $_POST['status'] ?? 'scheduled';
             $notes = trim($_POST['notes'] ?? '');
 
-            $this->scheduleModel->update($id, compact('bus_id', 'route_id', 'departure_datetime', 'arrival_datetime', 'base_price', 'available_seats', 'status', 'notes'));
+            // Validate bus schedule and route type (exclude current schedule from check)
+            $errors = [];
+            $validation = $this->scheduleModel->validateBusSchedule(
+                $bus_id,
+                $route_id,
+                $departure_datetime,
+                $route_type,
+                $id  // exclude current schedule
+            );
+
+            if (!$validation['valid']) {
+                $errors[] = $validation['message'];
+            }
+
+            if (!empty($errors)) {
+                $schedule = $this->scheduleModel->findById($id);
+                $buses = $this->busModel->getAll();
+                $routes = $this->routeModel->getAll();
+                $data = ['errors' => $errors, 'schedule' => $schedule, 'buses' => $buses, 'routes' => $routes];
+                $this->renderDashboard('admin/schedules/form', $data);
+                return;
+            }
+
+            $this->scheduleModel->update($id, compact('bus_id', 'route_id', 'route_type', 'departure_datetime', 'arrival_datetime', 'base_price', 'available_seats', 'status', 'notes'));
             header('Location: ' . BASEURL . 'admin/schedules');
             exit;
         }

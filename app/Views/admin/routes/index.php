@@ -33,13 +33,11 @@
                                 <td><?php echo htmlspecialchars($route['origin_city']); ?></td>
                                 <td><?php echo htmlspecialchars($route['destination_city']); ?></td>
                                 <td>
-                                    <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 500;
                                     <?php if ($route['status'] === 'active'): ?>
-                                        background: #d1fae5; color: #065f46;
+                                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 500; background: #d1fae5; color: #065f46;"><?php echo ucfirst(htmlspecialchars($route['status'])); ?></span>
                                     <?php else: ?>
-                                        background: #fee2e2; color: #991b1b;
+                                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 500; background: #fee2e2; color: #991b1b;"><?php echo ucfirst(htmlspecialchars($route['status'])); ?></span>
                                     <?php endif; ?>
-                                    "><?php echo ucfirst(htmlspecialchars($route['status'])); ?></span>
                                 </td>
                                 <td style="display: flex; gap: 8px; flex-wrap: wrap;">
                                     <a href="<?php echo BASEURL; ?>admin/routes/<?php echo $route['route_id']; ?>/locations" class="btn btn-outline" style="padding: 6px 10px; font-size: 0.85rem;">Lokasi</a>

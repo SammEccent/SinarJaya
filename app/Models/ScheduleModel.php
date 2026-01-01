@@ -43,9 +43,10 @@ class ScheduleModel
             $available = $total_seats;
         }
 
-        $this->db->prepare('INSERT INTO schedules (bus_id, route_id, departure_datetime, arrival_datetime, base_price, available_seats, status, notes, created_at) VALUES (:bus_id, :route_id, :departure, :arrival, :base_price, :available_seats, :status, :notes, :created_at)');
+        $this->db->prepare('INSERT INTO schedules (bus_id, route_id, route_type, departure_datetime, arrival_datetime, base_price, available_seats, status, notes, created_at) VALUES (:bus_id, :route_id, :route_type, :departure, :arrival, :base_price, :available_seats, :status, :notes, :created_at)');
         $this->db->bind(':bus_id', $bus_id);
         $this->db->bind(':route_id', $data['route_id']);
+        $this->db->bind(':route_type', $data['route_type'] ?? 'forward');
         $this->db->bind(':departure', $data['departure_datetime']);
         $this->db->bind(':arrival', $data['arrival_datetime']);
         $this->db->bind(':base_price', $data['base_price']);
@@ -66,9 +67,10 @@ class ScheduleModel
             $available = $total_seats;
         }
 
-        $this->db->prepare('UPDATE schedules SET bus_id = :bus_id, route_id = :route_id, departure_datetime = :departure, arrival_datetime = :arrival, base_price = :base_price, available_seats = :available_seats, status = :status, notes = :notes WHERE id = :id');
+        $this->db->prepare('UPDATE schedules SET bus_id = :bus_id, route_id = :route_id, route_type = :route_type, departure_datetime = :departure, arrival_datetime = :arrival, base_price = :base_price, available_seats = :available_seats, status = :status, notes = :notes WHERE id = :id');
         $this->db->bind(':bus_id', $bus_id);
         $this->db->bind(':route_id', $data['route_id']);
+        $this->db->bind(':route_type', $data['route_type'] ?? 'forward');
         $this->db->bind(':departure', $data['departure_datetime']);
         $this->db->bind(':arrival', $data['arrival_datetime']);
         $this->db->bind(':base_price', $data['base_price']);
@@ -269,5 +271,139 @@ class ScheduleModel
         }
 
         return $fixed_ids;
+    }
+
+    /**
+     * Auto-update status jadwal yang sudah berangkat
+     * Update status dari 'scheduled' ke 'departed' jika waktu keberangkatan sudah lewat
+     * 
+     * @return int Number of schedules updated
+     */
+    public function updateDepartedSchedules()
+    {
+        $this->db->prepare("
+            UPDATE schedules 
+            SET status = 'departed' 
+            WHERE status = 'scheduled' 
+            AND departure_datetime < NOW()
+        ");
+
+        return $this->db->execute() ? $this->db->rowCount() : 0;
+    }
+
+    /**
+     * Validate if a bus can be scheduled for a specific route and time
+     * Logika baru:
+     * 1. Cek apakah bus punya jadwal departed yang masih berjalan
+     * 2. Jadwal baru harus setelah waktu tiba jadwal yang sedang berjalan
+     * 3. Jadwal baru harus menggunakan route_type berlawanan (forward <-> return)
+     * 4. Untuk return, route harus menuju ke origin dari jadwal sebelumnya
+     * 
+     * @param int $bus_id Bus ID
+     * @param int $route_id Route ID untuk jadwal baru
+     * @param string $departure_datetime Waktu keberangkatan jadwal baru
+     * @param string $route_type Route type jadwal baru (forward/return)
+     * @param int|null $exclude_schedule_id Schedule ID to exclude (untuk edit)
+     * @return array ['valid' => bool, 'message' => string, 'current_schedule' => array|null]
+     */
+    public function validateBusSchedule($bus_id, $route_id, $departure_datetime, $route_type, $exclude_schedule_id = null)
+    {
+        // Get route info for new schedule
+        $this->db->prepare("SELECT origin_city, destination_city FROM routes WHERE route_id = :route_id");
+        $this->db->bind(':route_id', $route_id);
+        $newRoute = $this->db->fetch();
+
+        if (!$newRoute) {
+            return [
+                'valid' => false,
+                'message' => 'Rute tidak ditemukan',
+                'current_schedule' => null
+            ];
+        }
+
+        // Find current departed schedule for this bus
+        $sql = "
+            SELECT s.*, s.route_type as schedule_route_type, r.origin_city, r.destination_city
+            FROM schedules s
+            JOIN routes r ON s.route_id = r.route_id
+            WHERE s.bus_id = :bus_id
+            AND s.status = 'departed'
+            AND s.arrival_datetime > NOW()
+        ";
+
+        if ($exclude_schedule_id) {
+            $sql .= " AND s.id != :exclude_id";
+        }
+
+        $sql .= " ORDER BY s.arrival_datetime DESC LIMIT 1";
+
+        $this->db->prepare($sql);
+        $this->db->bind(':bus_id', $bus_id);
+        if ($exclude_schedule_id) {
+            $this->db->bind(':exclude_id', $exclude_schedule_id);
+        }
+
+        $currentSchedule = $this->db->fetch();
+
+        // No current departed schedule, bus is free
+        if (!$currentSchedule) {
+            return [
+                'valid' => true,
+                'message' => '',
+                'current_schedule' => null
+            ];
+        }
+
+        // Check if new departure is after current arrival
+        // Convert to timestamps for accurate comparison
+        $newDepartureTime = strtotime($departure_datetime);
+        $currentArrivalTime = strtotime($currentSchedule['arrival_datetime']);
+
+        if ($newDepartureTime <= $currentArrivalTime) {
+            return [
+                'valid' => false,
+                'message' => 'Bus masih dalam perjalanan. Keberangkatan jadwal baru harus setelah jam tiba ' .
+                    date('d/m/Y H:i', $currentArrivalTime) .
+                    ' (Rute saat ini: ' . $currentSchedule['origin_city'] . ' → ' . $currentSchedule['destination_city'] . '). ' .
+                    'Jadwal yang Anda masukkan berangkat pada ' . date('d/m/Y H:i', $newDepartureTime),
+                'current_schedule' => $currentSchedule
+            ];
+        }
+
+        // Check if route type is opposite
+        $currentRouteType = $currentSchedule['schedule_route_type'] ?? 'forward';
+        if ($currentRouteType === $route_type) {
+            $expectedType = ($route_type === 'forward') ? 'return' : 'forward';
+            $expectedTypeText = ($expectedType === 'return') ? 'Arus Balik' : 'Arus Berangkat';
+
+            return [
+                'valid' => false,
+                'message' => 'Bus sedang beroperasi pada arus ' .
+                    ($currentRouteType === 'forward' ? 'berangkat' : 'balik') .
+                    ' (' . $currentSchedule['origin_city'] . ' → ' . $currentSchedule['destination_city'] . '). ' .
+                    'Jadwal selanjutnya harus menggunakan ' . $expectedTypeText,
+                'current_schedule' => $currentSchedule
+            ];
+        }
+
+        // If new schedule is 'return', check if route goes back to origin
+        if ($route_type === 'return') {
+            // Rute baru harus dari destination lama ke origin lama
+            if ($newRoute['origin_city'] !== $currentSchedule['destination_city']) {
+                return [
+                    'valid' => false,
+                    'message' => 'Untuk arus balik, rute harus berangkat dari ' . $currentSchedule['destination_city'] .
+                        ' (tujuan jadwal sebelumnya). Rute yang dipilih berangkat dari ' . $newRoute['origin_city'],
+                    'current_schedule' => $currentSchedule
+                ];
+            }
+        }
+
+        // All checks passed
+        return [
+            'valid' => true,
+            'message' => '',
+            'current_schedule' => $currentSchedule
+        ];
     }
 }

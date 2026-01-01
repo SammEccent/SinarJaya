@@ -43,13 +43,12 @@ class SeatModel
         return $this->db->fetch();
     }
 
-    public function create($bus_id, $seat_number, $type = 'regular', $price_adjustment = 0)
+    public function create($bus_id, $seat_number, $type = 'regular')
     {
-        $this->db->prepare('INSERT INTO seats (bus_id, seat_number, seat_type, price_adjustment, status) VALUES (:bus_id, :seat_number, :seat_type, :price_adjustment, :status)');
+        $this->db->prepare('INSERT INTO seats (bus_id, seat_number, seat_type, status) VALUES (:bus_id, :seat_number, :seat_type, :status)');
         $this->db->bind(':bus_id', $bus_id);
         $this->db->bind(':seat_number', $seat_number);
         $this->db->bind(':seat_type', $type);
-        $this->db->bind(':price_adjustment', $price_adjustment);
         $this->db->bind(':status', 'available');
         return $this->db->execute();
     }

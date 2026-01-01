@@ -7,7 +7,7 @@
 
 <div class="admin-body">
     <div class="section" style="max-width: 800px;">
-        <?php if (!empty($errors)): ?>
+        <?php if (!empty($errors) && is_array($errors)): ?>
             <div style="background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #ef4444;">
                 <strong>Kesalahan:</strong>
                 <ul style="margin: 10px 0 0 20px; padding: 0;">
@@ -37,6 +37,15 @@
                         <option value="<?php echo $r['route_id']; ?>" <?php echo (isset($schedule) && $schedule['route_id'] == $r['route_id']) || (isset($old['route_id']) && $old['route_id'] == $r['route_id']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($r['route_code'] . ' - ' . $r['origin_city'] . ' → ' . $r['destination_city']); ?></option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+
+            <div>
+                <label for="route_type" style="display:block; margin-bottom:8px; font-weight:500; color:#374151;">Jenis Arus <span style="color:#ef4444;">*</span></label>
+                <select id="route_type" name="route_type" required style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px;">
+                    <option value="forward" <?php echo (isset($schedule) && ($schedule['route_type'] ?? 'forward') === 'forward') || (!isset($schedule) && (!isset($old['route_type']) || $old['route_type'] === 'forward')) ? 'selected' : ''; ?>>Arus Berangkat</option>
+                    <option value="return" <?php echo (isset($schedule) && ($schedule['route_type'] ?? 'forward') === 'return') || (isset($old['route_type']) && $old['route_type'] === 'return') ? 'selected' : ''; ?>>Arus Balik</option>
+                </select>
+                <small style="color: #6b7280; margin-top: 4px; display: block;">Bus yang sedang berangkat hanya bisa dijadwalkan dengan arus balik</small>
             </div>
 
             <div>
@@ -70,7 +79,7 @@
 
             <div style="grid-column: 1 / -1;">
                 <label for="notes" style="display:block; margin-bottom:8px; font-weight:500; color:#374151;">Catatan</label>
-                <textarea id="notes" name="notes" rows="4" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px;"><?php echo isset($schedule) ? htmlspecialchars($schedule['notes']) : (isset($old['notes']) ? htmlspecialchars($old['notes']) : ''); ?></textarea>
+                <textarea id="notes" name="notes" rows="4" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px;"><?php echo isset($schedule) ? htmlspecialchars($schedule['notes'] ?? '') : (isset($old['notes']) ? htmlspecialchars($old['notes'] ?? '') : ''); ?></textarea>
             </div>
 
             <div style="grid-column: 1 / -1; display:flex; gap:10px;">

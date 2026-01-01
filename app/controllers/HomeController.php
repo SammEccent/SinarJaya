@@ -13,9 +13,18 @@ class HomeController extends Controller
      */
     public function index()
     {
+        // Clear any previous search errors
+        unset($_SESSION['search_errors']);
+        unset($_SESSION['old']);
+
+        // Get popular routes
+        $routeModel = $this->model('RouteModel');
+        $popularRoutes = $routeModel->getPopularRoutes(2);
+
         // Get data for the landing page
         $data = [
-            'title' => 'Beranda'
+            'title' => 'Beranda',
+            'popularRoutes' => $popularRoutes
         ];
 
         // Render the layout with landing page content
