@@ -197,6 +197,7 @@
         background: #f9fafb;
         border-radius: 12px;
         margin-bottom: 30px;
+        position: relative;
     }
 
     .qr-code-image {
@@ -206,6 +207,36 @@
         border-radius: 12px;
         padding: 20px;
         background: white;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .qr-code-container::before {
+        content: '';
+        display: block;
+        width: 300px;
+        height: 300px;
+        margin: 0 auto 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        opacity: 0.1;
+        border-radius: 12px;
+        animation: pulse 1.5s ease-in-out infinite;
+        position: absolute;
+        top: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 0.1;
+        }
+
+        50% {
+            opacity: 0.2;
+        }
     }
 
     .steps-list {
@@ -440,11 +471,23 @@
 
         <?php if (isset($instructions['qr_code'])): ?>
             <div class="qr-code-container">
-                <img src="<?php echo BASEURL; ?>assets/images/<?php echo $instructions['qr_code']; ?>"
-                    alt="QR Code"
+                <?php
+                // Generate QR Code URL using external API
+                $qr_data = "00020101021226670016ID.CO.QRIS.WWW0118SINARJAYATRANS1230303UME51440014ID.CO.QRIS.WWW02150012345678901230303UME520454995303360540" . number_format($payment['amount'], 2, '.', '') . "5802ID5920PT SINAR JAYA TRANS6007JAKARTA61051234062070703A0163044123";
+                $qr_code_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($qr_data);
+                ?>
+                <img src="<?php echo $qr_code_url; ?>"
+                    alt="QR Code QRIS"
                     class="qr-code-image"
-                    onerror="this.src='<?php echo BASEURL; ?>assets/images/qris-placeholder.png'">
-                <p style="margin-top: 15px; color: #6b7280;">Scan kode QR di atas menggunakan aplikasi e-wallet Anda</p>
+                    id="qrisImage"
+                    onload="this.style.opacity='1'"
+                    style="opacity: 0; transition: opacity 0.3s ease;">
+                <p style="margin-top: 15px; color: #6b7280;">
+                    <i class="fas fa-mobile-alt"></i> Scan kode QR di atas menggunakan aplikasi e-wallet Anda
+                </p>
+                <p style="margin-top: 10px; font-size: 13px; color: #9ca3af;">
+                    Nominal: <strong style="color: #667eea;">Rp <?php echo number_format($payment['amount'], 0, ',', '.'); ?></strong>
+                </p>
             </div>
         <?php endif; ?>
 
@@ -518,15 +561,93 @@
 
 <script>
     function copyText(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Nomor rekening berhasil disalin!');
-        });
+        // Try modern clipboard API first
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopySuccess('Nomor rekening berhasil disalin!');
+            }).catch(err => {
+                console.error('Clipboard API failed:', err);
+                fallbackCopyText(text, 'Nomor rekening berhasil disalin!');
+            });
+        } else {
+            // Fallback for older browsers or non-secure context
+            fallbackCopyText(text, 'Nomor rekening berhasil disalin!');
+        }
     }
 
     function copyAmount(amount) {
-        navigator.clipboard.writeText(amount.toString()).then(() => {
-            alert('Nominal berhasil disalin!');
-        });
+        const text = amount.toString();
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopySuccess('Nominal berhasil disalin!');
+            }).catch(err => {
+                console.error('Clipboard API failed:', err);
+                fallbackCopyText(text, 'Nominal berhasil disalin!');
+            });
+        } else {
+            fallbackCopyText(text, 'Nominal berhasil disalin!');
+        }
+    }
+
+    function fallbackCopyText(text, successMessage) {
+        // Create temporary textarea
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.top = '-9999px';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+
+        try {
+            // Select and copy
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // For mobile devices
+
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopySuccess(successMessage);
+            } else {
+                showCopyError();
+            }
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            showCopyError();
+        } finally {
+            document.body.removeChild(textarea);
+        }
+    }
+
+    function showCopySuccess(message) {
+        // Create toast notification
+        const toast = document.createElement('div');
+        toast.innerHTML = '<i class="fas fa-check-circle"></i> ' + message;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            font-weight: 600;
+            animation: slideIn 0.3s ease;
+        `;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 300);
+        }, 2000);
+    }
+
+    function showCopyError() {
+        alert('Gagal menyalin. Silakan salin secara manual.');
     }
 
     function previewFile(input) {
@@ -540,26 +661,76 @@
         }
     }
 
+    // Handle QR Code loading
+    document.addEventListener('DOMContentLoaded', function() {
+        const qrisImage = document.getElementById('qrisImage');
+        if (qrisImage) {
+            qrisImage.addEventListener('error', function() {
+                console.error('Failed to load QR Code');
+                this.style.opacity = '0.5';
+                this.alt = 'QR Code tidak dapat dimuat';
+                // Retry loading after 2 seconds
+                setTimeout(() => {
+                    const currentSrc = this.src;
+                    this.src = '';
+                    this.src = currentSrc;
+                }, 2000);
+            });
+
+            qrisImage.addEventListener('load', function() {
+                this.style.opacity = '1';
+            });
+        }
+    });
+
     // Drag and drop
     const dropZone = document.querySelector('.file-input-wrapper');
 
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
-    });
+    if (dropZone) {
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
 
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('dragover');
-    });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
 
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
 
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            document.getElementById('fileInput').files = files;
-            previewFile(document.getElementById('fileInput'));
-        }
-    });
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                previewFile(document.getElementById('fileInput'));
+            }
+        });
+    }
 </script>
+
+<style>
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+</style>

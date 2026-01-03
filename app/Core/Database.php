@@ -25,7 +25,9 @@ class Database
             // Create a new PDO instance
             $this->dbh = new PDO($dsn, $this->user, $this->pass, $options);
         } catch (PDOException $e) {
-            die("Database connection failed: " . $e->getMessage());
+            // Log error secara internal, jangan expose ke user
+            error_log("Database connection failed: " . $e->getMessage());
+            die("Terjadi kesalahan koneksi database. Silakan hubungi administrator.");
         }
     }
 

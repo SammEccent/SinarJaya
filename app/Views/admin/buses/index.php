@@ -6,6 +6,7 @@
 </div>
 
 <div class="admin-body">
+    <?php require_once __DIR__ . '/../../partials/admin_alerts.php'; ?>
     <div class="section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Daftar Bus</h2>

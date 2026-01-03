@@ -89,8 +89,13 @@ class SeatModel
                 s.seat_type,
                 s.status as seat_status,
                 CASE 
-                    WHEN p.id IS NOT NULL THEN "booked"
+                    -- Check if seat is in maintenance
                     WHEN s.status = "maintenance" THEN "maintenance"
+                    -- Check if seat is booked via passengers table for this schedule
+                    WHEN p.id IS NOT NULL THEN "booked"
+                    -- Check if seat status is manually set to booked (legacy)
+                    WHEN s.status = "booked" THEN "booked"
+                    -- Otherwise available
                     ELSE "available"
                 END as booking_status
             FROM seats s
@@ -136,13 +141,19 @@ class SeatModel
             AND (b.payment_expiry IS NULL OR b.payment_expiry > NOW())
         ");
 
-        foreach ($seat_ids as $index => $seat_id) {
-            $this->db->bind($index + 1, $seat_id);
+        // Bind seat IDs
+        $paramIndex = 1;
+        foreach ($seat_ids as $seat_id) {
+            $this->db->bind($paramIndex, $seat_id);
+            $paramIndex++;
         }
-        $this->db->bind(count($seat_ids) + 1, $schedule_id);
+
+        // Bind schedule_id
+        $this->db->bind($paramIndex, $schedule_id);
 
         $result = $this->db->fetch();
 
+        // Return true if no seats are booked (all available)
         return ($result['booked_count'] == 0);
     }
 

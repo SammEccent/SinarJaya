@@ -6,6 +6,7 @@
 </div>
 
 <div class="admin-body">
+    <?php require_once __DIR__ . '/../../partials/admin_alerts.php'; ?>
     <div class="section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Daftar Jadwal</h2>
@@ -47,7 +48,7 @@
                                 </td>
                                 <td><?php echo htmlspecialchars($s['departure_datetime']); ?></td>
                                 <td><?php echo htmlspecialchars($s['arrival_datetime']); ?></td>
-                                <td>Rp <?php echo number_format($s['base_price'] ?? 0, 0, ',', '.'); ?></td>
+                                <td>Rp <?php echo number_format($s['final_price'] ?? 0, 0, ',', '.'); ?></td>
                                 <td><?php echo htmlspecialchars($s['available_seats']); ?></td>
                                 <td>
                                     <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 500; <?php echo ($s['status'] === 'scheduled') ? 'background: #d1fae5; color: #065f46;' : (($s['status'] === 'departed') ? 'background: #fef3c7; color: #92400e;' : 'background: #fee2e2; color: #991b1b;'); ?>">

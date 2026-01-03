@@ -4,6 +4,7 @@
 </div>
 
 <div class="admin-body">
+    <?php require_once __DIR__ . '/../../partials/admin_alerts.php'; ?>
     <div class="section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Daftar Pengguna</h2>
@@ -18,7 +19,7 @@
                 <button type="submit" class="btn btn-secondary"><i class="fas fa-search"></i> Cari</button>
             </form>
         </div>
-        
+
         <div class="table-container">
             <table>
                 <thead>
@@ -68,61 +69,88 @@
 </div>
 
 <style>
-.section {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-.table-container {
-    overflow-x: auto;
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-th, td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #e5e7eb;
-    vertical-align: middle;
-}
-thead th {
-    background-color: #f9fafb;
-    font-weight: 600;
-    color: #4b5563;
-}
-tbody tr:hover {
-    background-color: #f9fafb;
-}
-.action-links {
-    display: flex;
-    gap: 8px;
-}
-.action-links a {
-    text-decoration: none;
-    padding: 6px 10px;
-    border-radius: 5px;
-    font-size: 0.9em;
-}
-.btn-action.btn-edit {
-    background-color: #eff6ff;
-    color: #1d4ed8;
-}
-.btn-action.btn-delete {
-    background-color: #fef2f2;
-    color: #b91c1c;
-}
-.status-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.85em;
-    font-weight: 500;
-    text-transform: capitalize;
-}
-.status-admin { background-color: #e0e7ff; color: #3730a3; }
-.status-user { background-color: #e5e7eb; color: #4b5563; }
-.status-verified { background-color: #dcfce7; color: #166534; }
-.status-not-verified { background-color: #fef9c3; color: #854d0e; }
+    .section {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    th,
+    td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+    }
+
+    thead th {
+        background-color: #f9fafb;
+        font-weight: 600;
+        color: #4b5563;
+    }
+
+    tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .action-links {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-links a {
+        text-decoration: none;
+        padding: 6px 10px;
+        border-radius: 5px;
+        font-size: 0.9em;
+    }
+
+    .btn-action.btn-edit {
+        background-color: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .btn-action.btn-delete {
+        background-color: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-weight: 500;
+        text-transform: capitalize;
+    }
+
+    .status-admin {
+        background-color: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .status-user {
+        background-color: #e5e7eb;
+        color: #4b5563;
+    }
+
+    .status-verified {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .status-not-verified {
+        background-color: #fef9c3;
+        color: #854d0e;
+    }
 </style>

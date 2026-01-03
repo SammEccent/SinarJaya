@@ -9,9 +9,6 @@ class AuthController extends Controller
     public function __construct()
     {
         $this->userModel = $this->model('UserModel');
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
     }
 
     // Default to login form
@@ -261,10 +258,6 @@ class AuthController extends Controller
 
     public function logout()
     {
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
-
         unset($_SESSION['user_id'], $_SESSION['user_email'], $_SESSION['role']);
         session_destroy();
 
@@ -272,31 +265,12 @@ class AuthController extends Controller
         exit;
     }
 
-    // Render helper (same pattern as other controllers)
-    protected function renderWithLayout($view, $data = [])
-    {
-        extract($data);
-        ob_start();
-        if (file_exists('../app/Views/' . $view . '.php')) {
-            require_once '../app/Views/' . $view . '.php';
-        } else {
-            die('View does not exist: ' . $view);
-        }
-        $content = ob_get_clean();
-        if (file_exists('../app/Views/layouts/main.php')) {
-            require_once '../app/Views/layouts/main.php';
-        } else {
-            die('Layout does not exist');
-        }
-    }
-
     /**
      * Send verification email to user
      */
     private function sendVerificationEmail($email, $token, $name)
     {
-        require_once '../vendor/autoload.php';
-
+        // PHPMailer already loaded via vendor/autoload.php in app/init.php
         $mail = new \PHPMailer\PHPMailer\PHPMailer();
         try {
             // SMTP configuration

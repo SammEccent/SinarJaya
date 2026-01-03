@@ -4,14 +4,15 @@ class UserController extends Controller
 {
     protected $bookingModel;
     protected $paymentModel;
+    protected $seatModel;
+    protected $scheduleModel;
 
     public function __construct()
     {
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
         $this->bookingModel = $this->model('BookingModel');
         $this->paymentModel = $this->model('PaymentModel');
+        $this->seatModel = $this->model('SeatModel');
+        $this->scheduleModel = $this->model('ScheduleModel');
     }
 
     /**
@@ -253,9 +254,8 @@ class UserController extends Controller
             exit;
         }
 
-        // Update password
-        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-        $result = $userModel->update($_SESSION['user_id'], ['password' => $hashedPassword]);
+        // Update password (send plain password, model will hash it)
+        $result = $userModel->update($_SESSION['user_id'], ['password' => $newPassword]);
 
         if ($result) {
             $_SESSION['success'] = 'Password berhasil diubah';
@@ -268,14 +268,122 @@ class UserController extends Controller
     }
 
     /**
-     * Render view with layout
+     * Cancel booking
+     * User can cancel their own booking
      */
-    private function renderWithLayout($view, $data = [])
+    public function cancel($booking_id)
     {
-        extract($data);
-        ob_start();
-        require_once '../app/Views/' . $view . '.php';
-        $content = ob_get_clean();
-        require_once '../app/Views/layouts/main.php';
+        // Set JSON header
+        header('Content-Type: application/json');
+
+        // Check if user is logged in
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Silakan login terlebih dahulu'
+            ]);
+            exit;
+        }
+
+        // Validate booking_id
+        $booking_id = (int)$booking_id;
+        if ($booking_id <= 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'ID booking tidak valid'
+            ]);
+            exit;
+        }
+
+        // Get booking
+        $booking = $this->bookingModel->findById($booking_id);
+
+        if (!$booking) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Booking tidak ditemukan'
+            ]);
+            exit;
+        }
+
+        // Check if booking belongs to current user
+        if ($booking['user_id'] != $_SESSION['user_id']) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses ke booking ini'
+            ]);
+            exit;
+        }
+
+        // Check if booking can be cancelled
+        if ($booking['booking_status'] !== 'pending' && $booking['booking_status'] !== 'confirmed') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Booking ini tidak dapat dibatalkan'
+            ]);
+            exit;
+        }
+
+        // Check if already cancelled
+        if ($booking['booking_status'] === 'cancelled') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Booking sudah dibatalkan sebelumnya'
+            ]);
+            exit;
+        }
+
+        // Get payment info
+        $payment = $this->paymentModel->getByBookingId($booking_id);
+
+        // Check if payment is already paid
+        $isPaid = ($payment && $payment['payment_status'] === 'paid');
+
+        // Update booking status to cancelled
+        $result = $this->bookingModel->update($booking_id, [
+            'booking_status' => 'cancelled'
+        ]);
+
+        if (!$result) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Gagal membatalkan booking'
+            ]);
+            exit;
+        }
+
+        // Release seats back to available
+        $passengers = $this->bookingModel->getPassengers($booking_id);
+        $seat_ids = [];
+        foreach ($passengers as $passenger) {
+            if (!empty($passenger['seat_id'])) {
+                $seat_ids[] = $passenger['seat_id'];
+            }
+        }
+
+        if (!empty($seat_ids)) {
+            $this->seatModel->updateMultipleStatus($seat_ids, 'available');
+        }
+
+        // Update available seats in schedule
+        $schedule = $this->scheduleModel->findById($booking['schedule_id']);
+        if ($schedule) {
+            $new_available = $schedule['available_seats'] + $booking['total_passengers'];
+            $this->scheduleModel->updateAvailableSeats($booking['schedule_id'], $new_available);
+        }
+
+        // Prepare response message
+        $message = 'Booking berhasil dibatalkan';
+
+        if ($isPaid) {
+            $message .= '. Pembayaran Anda sudah diterima dan akan diproses untuk pengembalian dana (refund) oleh admin dalam waktu 2x24 jam.';
+        }
+
+        echo json_encode([
+            'success' => true,
+            'message' => $message,
+            'refund_needed' => $isPaid
+        ]);
+        exit;
     }
 }

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Waktu pembuatan: 01 Jan 2026 pada 13.58
+-- Waktu pembuatan: 03 Jan 2026 pada 06.09
 -- Versi server: 8.0.30
 -- Versi PHP: 8.4.14
 
@@ -20,25 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Basis data: `sinarjaya_db`
 --
-
--- --------------------------------------------------------
-
---
--- Struktur dari tabel `audit_logs`
---
-
-CREATE TABLE `audit_logs` (
-  `id` int NOT NULL,
-  `user_id` int DEFAULT NULL,
-  `action` varchar(100) NOT NULL,
-  `table_name` varchar(50) DEFAULT NULL,
-  `record_id` int DEFAULT NULL,
-  `old_values` json DEFAULT NULL,
-  `new_values` json DEFAULT NULL,
-  `ip_address` varchar(45) DEFAULT NULL,
-  `user_agent` text,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -67,10 +48,13 @@ CREATE TABLE `bookings` (
 --
 
 INSERT INTO `bookings` (`id`, `booking_code`, `user_id`, `schedule_id`, `pickup_location_id`, `drop_location_id`, `total_passengers`, `total_amount`, `booking_status`, `payment_expiry`, `notes`, `created_at`, `updated_at`) VALUES
-(1, 'SJ-20260105001', 2, 1, NULL, NULL, 1, 250000.00, 'confirmed', '2026-01-05 15:00:00', '', '2025-12-29 11:36:05', '2025-12-30 07:59:21'),
-(14, 'SJ-202512317717', 8, 1, 1, 8, 1, 300000.00, 'expired', '2025-12-31 21:19:23', '', '2025-12-31 13:59:23', '2025-12-31 14:24:52'),
-(15, 'SJ-202512312293', 8, 1, 1, 8, 1, 300000.00, 'confirmed', '2025-12-31 21:52:36', '', '2025-12-31 14:32:36', '2025-12-31 14:35:16'),
-(16, 'SJ-202512318781', 8, 3, 1, 7, 1, 560000.00, 'confirmed', '2025-12-31 22:23:16', '', '2025-12-31 15:03:16', '2025-12-31 15:08:32');
+(21, 'SJ-202601032290', 10, 17, 1, 17, 3, 900000.00, 'confirmed', '2026-01-03 11:59:48', '', '2026-01-03 04:39:48', '2026-01-03 04:41:10'),
+(22, 'SJ-202601035072', 8, 17, 13, 17, 1, 300000.00, 'confirmed', '2026-01-03 12:04:09', '', '2026-01-03 04:44:09', '2026-01-03 04:44:40'),
+(23, 'SJ-202601032392', 2, 17, 2, 16, 2, 600000.00, 'cancelled', '2026-01-03 12:08:45', '', '2026-01-03 04:48:45', '2026-01-03 05:00:26'),
+(24, 'SJ-202601031413', 2, 17, 13, 17, 2, 600000.00, 'cancelled', '2026-01-03 12:36:05', '', '2026-01-03 05:16:05', '2026-01-03 05:23:17'),
+(25, 'SJ-202601031617', 2, 32, 1, 17, 2, 1120000.00, 'confirmed', '2026-01-03 12:46:11', '', '2026-01-03 05:26:11', '2026-01-03 05:30:34'),
+(26, 'SJ-202601033005', 10, 57, 17, 1, 1, 560000.00, 'confirmed', '2026-01-03 12:55:39', 'Mantap', '2026-01-03 05:35:39', '2026-01-03 05:36:49'),
+(27, 'SJ-202601038676', 8, 46, 1, 8, 1, 300000.00, 'confirmed', '2026-01-03 13:21:25', '', '2026-01-03 06:01:25', '2026-01-03 06:02:08');
 
 -- --------------------------------------------------------
 
@@ -97,7 +81,7 @@ CREATE TABLE `buses` (
 INSERT INTO `buses` (`id`, `plate_number`, `bus_class_id`, `operator_id`, `total_seats`, `seat_layout`, `facilities`, `status`, `created_at`) VALUES
 (1, 'AB 1234 SJA', 1, 1, 30, '2-2', 'AC, Leg Rest, Toilet, Snack', 'active', '2025-12-29 11:35:31'),
 (2, 'AB 5678 SJI', 2, 1, 13, '1-1', 'Full Flat Bed, AVOD, Meal, Wi-Fi', 'active', '2025-12-29 11:35:31'),
-(3, 'AB 9101 JAS', 2, 1, 30, '1-1', 'Full Flat Bed, AVOD, Meal, Wi-Fi', 'active', '2025-12-29 11:35:31'),
+(3, 'AB 9101 JAS', 2, 1, 13, '1-1', 'Full Flat Bed, AVOD, Meal, Wi-Fi', 'active', '2025-12-29 11:35:31'),
 (4, 'AB 7001 AAV', 1, 1, 30, '2-2', 'AC, Toilet, Leg Rest, Snack', 'active', '2025-12-30 11:59:34'),
 (5, 'AB 7002 ABY', 1, 1, 30, '2-2', 'AC, Toilet, Leg Rest, Snack', 'active', '2025-12-30 11:59:34'),
 (6, 'AB 7003 ACG', 1, 1, 30, '2-2', 'AC, Toilet, Leg Rest, Snack', 'active', '2025-12-30 11:59:34'),
@@ -109,7 +93,7 @@ INSERT INTO `buses` (`id`, `plate_number`, `bus_class_id`, `operator_id`, `total
 (12, 'AB 7009 AIZ', 1, 1, 30, '2-2', 'AC, Toilet, Leg Rest, Snack', 'active', '2025-12-30 11:59:34'),
 (13, 'AB 7010 AJP', 1, 1, 30, '2-2', 'AC, Toilet, Leg Rest, Snack', 'active', '2025-12-30 11:59:34'),
 (14, 'AB 7011 AKE', 1, 1, 30, '2-2', 'AC, Toilet, Leg Rest, Snack', 'active', '2025-12-30 11:59:34'),
-(15, 'AB 9001 ZAX', 2, 1, 11, '1-1', 'Full Flat Bed, AVOD, Meal, Wi-Fi', 'active', '2025-12-30 11:59:34'),
+(15, 'AB 9001 ZAX', 2, 1, 13, '1-1', 'Full Flat Bed, AVOD, Meal, Wi-Fi', 'active', '2025-12-30 11:59:34'),
 (16, 'AB 9002 ZBI', 2, 1, 13, '1-1', 'Full Flat Bed, AVOD, Meal, Wi-Fi', 'active', '2025-12-30 11:59:34'),
 (17, 'AB 9003 ZCB', 2, 1, 13, '1-1', 'Full Flat Bed, AVOD, Meal, Wi-Fi', 'active', '2025-12-30 11:59:34'),
 (18, 'AB 9004 ZDT', 2, 1, 13, '1-1', 'Full Flat Bed, AVOD, Meal, Wi-Fi', 'active', '2025-12-30 11:59:34'),
@@ -207,10 +191,18 @@ CREATE TABLE `passengers` (
 --
 
 INSERT INTO `passengers` (`id`, `booking_id`, `seat_id`, `full_name`, `id_card_type`, `id_card_number`, `phone`, `created_at`) VALUES
-(1, 1, 1, 'Budi Santoso', 'ktp', '3201234567890001', '085712345678', '2025-12-29 11:36:05'),
-(14, 14, 2, 'Samirudin Annas Alfattah', 'ktp', '3205124501850002', '081227230956', '2025-12-31 13:59:23'),
-(15, 15, 25, 'Samirudin Annas Alfattah', 'ktp', '3205124501850002', '081227230956', '2025-12-31 14:32:36'),
-(16, 16, 5, 'Yoga', 'ktp', '3205124501450001', '081227230945', '2025-12-31 15:03:16');
+(21, 21, 122, 'Arya', 'ktp', '3305124501850002', '081127230956', '2026-01-03 04:39:48'),
+(22, 21, 123, 'Bani', 'ktp', '3205124501560002', '082227230956', '2026-01-03 04:39:48'),
+(23, 21, 124, 'Carla', 'ktp', '3205124903850002', '081427230999', '2026-01-03 04:39:48'),
+(24, 22, 129, 'Annas', 'ktp', '3205124501850032', '081227230956', '2026-01-03 04:44:09'),
+(25, 23, 126, 'Samoel', 'ktp', '3201234501850032', '081127990956', '2026-01-03 04:48:45'),
+(26, 23, 127, 'Awaa', 'ktp', '3209914501450001', '081227230111', '2026-01-03 04:48:45'),
+(27, 24, 132, 'Samoel', 'ktp', '3201234501850032', '081127990956', '2026-01-03 05:16:05'),
+(28, 24, 133, 'Awaa', 'ktp', '3209914501450001', '081227230111', '2026-01-03 05:16:05'),
+(29, 25, 413, 'Samoel', 'ktp', '3201234501850032', '081127990956', '2026-01-03 05:26:11'),
+(30, 25, 415, 'Awaa', 'ktp', '3209914501450001', '081227230111', '2026-01-03 05:26:11'),
+(31, 26, 414, 'Arya', 'ktp', '3305124501850002', '081127230956', '2026-01-03 05:35:39'),
+(32, 27, 32, 'Samirudin Annas Alfattah', 'ktp', '3205124501851112', '081227230956', '2026-01-03 06:01:25');
 
 -- --------------------------------------------------------
 
@@ -237,9 +229,13 @@ CREATE TABLE `payments` (
 --
 
 INSERT INTO `payments` (`id`, `booking_id`, `payment_method`, `payment_code`, `amount`, `payment_status`, `payment_proof_image`, `paid_at`, `payment_details`, `created_at`, `updated_at`) VALUES
-(1, 1, 'qris', 'PAY-QRIS-9921', 250000.00, 'paid', NULL, '2025-12-30 14:30:00', NULL, '2025-12-29 11:36:05', '2025-12-30 15:17:33'),
-(2, 15, 'e_wallet', 'PAY-EWL-49A13F09', 300000.00, 'paid', 'uploads/payments/payment_2_1767191679.png', '2025-12-31 21:35:16', '{\"created_by_user\": 8, \"selected_method\": \"e_wallet\"}', '2025-12-31 14:33:12', '2025-12-31 14:35:16'),
-(3, 16, 'bank_transfer', 'PAY-TRF-E3AAC072', 560000.00, 'paid', 'uploads/payments/payment_3_1767193448.png', '2025-12-31 22:08:32', '{\"created_by_user\": 8, \"selected_method\": \"bank_transfer\"}', '2025-12-31 15:03:48', '2025-12-31 15:08:32');
+(8, 21, 'bank_transfer', 'PAY-TRF-AD70D2A1', 900000.00, 'paid', 'uploads/payments/payment_8_1767415214.png', '2026-01-03 11:41:10', '{\"created_by_user\": 10, \"selected_method\": \"bank_transfer\"}', '2026-01-03 04:39:53', '2026-01-03 04:41:10'),
+(9, 22, 'e_wallet', 'PAY-EWL-BDB432BF', 300000.00, 'paid', 'uploads/payments/payment_9_1767415467.png', '2026-01-03 11:44:40', '{\"created_by_user\": 8, \"selected_method\": \"e_wallet\"}', '2026-01-03 04:44:16', '2026-01-03 04:44:40'),
+(10, 23, 'qris', 'PAY-QRS-2B5DB7C0', 600000.00, 'refunded', 'uploads/payments/payment_10_1767416339.png', NULL, '{\"refund_reason\": \"Pengembalian dana\", \"created_by_user\": 2, \"selected_method\": \"qris\"}', '2026-01-03 04:48:49', '2026-01-03 05:00:26'),
+(11, 24, 'bank_transfer', 'PAY-TRF-F42AAD25', 600000.00, 'refunded', 'uploads/payments/payment_11_1767417387.png', '2026-01-03 12:16:50', '{\"refund_reason\": \"Pengembalian dana\", \"created_by_user\": 2, \"selected_method\": \"bank_transfer\"}', '2026-01-03 05:16:12', '2026-01-03 05:23:17'),
+(12, 25, 'bank_transfer', 'PAY-TRF-BFD12F05', 1120000.00, 'paid', 'uploads/payments/payment_12_1767418216.png', '2026-01-03 12:30:34', '{\"created_by_user\": 2, \"selected_method\": \"bank_transfer\"}', '2026-01-03 05:26:27', '2026-01-03 05:30:34'),
+(13, 26, 'bank_transfer', 'PAY-TRF-7E1885CD', 560000.00, 'paid', 'uploads/payments/payment_13_1767418593.png', '2026-01-03 12:36:49', '{\"created_by_user\": 10, \"selected_method\": \"bank_transfer\"}', '2026-01-03 05:36:19', '2026-01-03 05:36:49'),
+(14, 27, 'qris', 'PAY-QRS-B29E0264', 300000.00, 'paid', 'uploads/payments/payment_14_1767420102.png', '2026-01-03 13:02:08', '{\"created_by_user\": 8, \"selected_method\": \"qris\"}', '2026-01-03 06:01:32', '2026-01-03 06:02:08');
 
 -- --------------------------------------------------------
 
@@ -304,7 +300,59 @@ INSERT INTO `route_location` (`route_location_id`, `route_id`, `location_id`, `f
 (13, 2, 4, 'DROP', 5),
 (14, 2, 3, 'DROP', 6),
 (15, 2, 2, 'DROP', 7),
-(16, 2, 1, 'DROP', 8);
+(16, 2, 1, 'DROP', 8),
+(18, 3, 1, 'BOARDING', 1),
+(19, 3, 2, 'BOARDING', 2),
+(20, 3, 3, 'BOARDING', 3),
+(21, 3, 4, 'BOARDING', 4),
+(22, 3, 9, 'BOTH', 5),
+(23, 3, 10, 'DROP', 6),
+(24, 3, 11, 'DROP', 7),
+(25, 3, 12, 'DROP', 8),
+(26, 4, 12, 'BOARDING', 1),
+(27, 4, 11, 'BOARDING', 2),
+(28, 4, 10, 'BOARDING', 3),
+(29, 4, 9, 'BOTH', 4),
+(30, 4, 4, 'DROP', 5),
+(31, 4, 3, 'DROP', 6),
+(32, 4, 2, 'DROP', 7),
+(33, 4, 1, 'DROP', 8),
+(34, 5, 1, 'BOARDING', 1),
+(35, 5, 2, 'BOARDING', 2),
+(36, 5, 3, 'BOARDING', 3),
+(37, 5, 13, 'BOARDING', 4),
+(38, 5, 14, 'BOTH', 5),
+(39, 5, 15, 'DROP', 6),
+(40, 5, 16, 'DROP', 7),
+(41, 5, 17, 'DROP', 8),
+(42, 6, 17, 'BOARDING', 1),
+(43, 6, 16, 'BOARDING', 2),
+(44, 6, 15, 'BOARDING', 3),
+(45, 6, 14, 'BOTH', 4),
+(46, 6, 13, 'DROP', 5),
+(47, 6, 3, 'DROP', 6),
+(48, 6, 2, 'DROP', 7),
+(49, 6, 1, 'DROP', 8),
+(50, 7, 1, 'BOARDING', 1),
+(51, 7, 2, 'BOARDING', 2),
+(52, 7, 3, 'BOARDING', 3),
+(53, 7, 13, 'BOARDING', 4),
+(54, 7, 14, 'BOTH', 5),
+(55, 7, 15, 'DROP', 6),
+(56, 7, 18, 'DROP', 7),
+(57, 7, 19, 'DROP', 8),
+(58, 7, 20, 'DROP', 9),
+(59, 7, 21, 'DROP', 10),
+(60, 8, 21, 'BOARDING', 1),
+(61, 8, 20, 'BOARDING', 2),
+(62, 8, 19, 'BOARDING', 3),
+(63, 8, 18, 'BOARDING', 4),
+(64, 8, 15, 'BOTH', 5),
+(65, 8, 14, 'DROP', 6),
+(66, 8, 13, 'DROP', 7),
+(67, 8, 3, 'DROP', 8),
+(68, 8, 2, 'DROP', 9),
+(69, 8, 1, 'DROP', 10);
 
 -- --------------------------------------------------------
 
@@ -332,11 +380,38 @@ CREATE TABLE `schedules` (
 --
 
 INSERT INTO `schedules` (`id`, `bus_id`, `route_id`, `route_type`, `departure_datetime`, `arrival_datetime`, `base_price`, `available_seats`, `status`, `notes`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 'forward', '2026-01-05 06:00:00', '2026-01-05 18:00:00', 150000.00, 27, 'scheduled', NULL, '2025-12-29 11:35:54', '2025-12-31 14:32:36'),
-(2, 4, 2, 'forward', '2026-01-05 06:00:00', '2026-01-05 18:00:00', 150000.00, 30, 'scheduled', NULL, '2025-12-29 11:35:54', '2025-12-31 13:58:24'),
-(3, 2, 1, 'forward', '2026-01-05 15:00:00', '2026-01-06 04:00:00', 160000.00, 12, 'scheduled', '', '2025-12-29 11:35:54', '2026-01-01 12:13:49'),
-(8, 24, 1, 'forward', '2026-01-01 20:21:00', '2026-01-02 12:49:00', 160000.00, 13, 'departed', '', '2026-01-01 12:49:58', '2026-01-01 13:21:16'),
-(12, 10, 3, 'forward', '2026-01-05 06:00:00', '2026-01-05 18:41:00', 150000.00, 30, 'scheduled', '', '2026-01-01 13:42:16', '2026-01-01 13:42:16');
+(13, 1, 1, 'forward', '2026-01-17 06:00:00', '2026-01-17 18:00:00', 150000.00, 30, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:08:24'),
+(14, 4, 2, 'forward', '2026-01-17 06:00:00', '2026-01-17 18:00:00', 150000.00, 30, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:08:36'),
+(15, 5, 3, 'forward', '2026-01-17 06:00:00', '2026-01-17 18:00:00', 150000.00, 30, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:08:53'),
+(16, 6, 4, 'forward', '2026-01-17 06:00:00', '2026-01-17 18:00:00', 150000.00, 30, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:09:04'),
+(17, 7, 5, 'forward', '2026-01-17 06:00:00', '2026-01-17 18:00:00', 150000.00, 26, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-03 05:22:05'),
+(18, 8, 6, 'forward', '2026-01-17 06:00:00', '2026-01-17 18:00:00', 150000.00, 30, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:09:37'),
+(19, 9, 7, 'forward', '2026-01-17 06:00:00', '2026-01-17 18:00:00', 150000.00, 30, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:09:50'),
+(20, 10, 8, 'forward', '2026-01-17 06:00:00', '2026-01-17 18:00:00', 150000.00, 30, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:10:04'),
+(28, 2, 1, 'forward', '2026-01-17 15:00:00', '2026-01-18 03:00:00', 160000.00, 13, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:05:59'),
+(29, 3, 2, 'forward', '2026-01-17 15:00:00', '2026-01-18 03:00:00', 160000.00, 13, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:06:23'),
+(30, 15, 3, 'forward', '2026-01-17 15:00:00', '2026-01-18 03:00:00', 160000.00, 13, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:06:40'),
+(31, 16, 4, 'forward', '2026-01-17 15:00:00', '2026-01-18 03:00:00', 160000.00, 13, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:06:54'),
+(32, 17, 5, 'forward', '2026-01-17 15:00:00', '2026-01-18 03:00:00', 160000.00, 11, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-03 05:26:11'),
+(33, 18, 6, 'forward', '2026-01-17 15:00:00', '2026-01-18 03:00:00', 160000.00, 13, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:07:42'),
+(34, 19, 7, 'forward', '2026-01-17 15:00:00', '2026-01-18 03:00:00', 160000.00, 13, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:07:54'),
+(35, 20, 8, 'forward', '2026-01-17 15:00:00', '2026-01-18 03:00:00', 160000.00, 13, 'scheduled', '', '2026-01-02 11:26:20', '2026-01-02 13:08:09'),
+(45, 1, 2, 'return', '2026-01-18 06:00:00', '2026-01-18 18:00:00', 150000.00, 30, 'scheduled', NULL, '2026-01-02 13:13:50', '2026-01-02 13:13:50'),
+(46, 4, 1, 'return', '2026-01-18 06:00:00', '2026-01-18 18:00:00', 150000.00, 29, 'scheduled', NULL, '2026-01-02 13:13:50', '2026-01-03 06:01:25'),
+(47, 5, 4, 'return', '2026-01-18 06:00:00', '2026-01-18 18:00:00', 150000.00, 30, 'scheduled', NULL, '2026-01-02 13:13:50', '2026-01-02 13:13:50'),
+(48, 6, 3, 'return', '2026-01-18 06:00:00', '2026-01-18 18:00:00', 150000.00, 30, 'scheduled', NULL, '2026-01-02 13:13:50', '2026-01-02 13:13:50'),
+(49, 7, 6, 'return', '2026-01-18 06:00:00', '2026-01-18 18:00:00', 150000.00, 30, 'scheduled', NULL, '2026-01-02 13:13:50', '2026-01-02 13:13:50'),
+(50, 8, 5, 'return', '2026-01-18 06:00:00', '2026-01-18 18:00:00', 150000.00, 30, 'scheduled', NULL, '2026-01-02 13:13:50', '2026-01-02 13:13:50'),
+(51, 9, 8, 'return', '2026-01-18 06:00:00', '2026-01-18 18:00:00', 150000.00, 30, 'scheduled', NULL, '2026-01-02 13:13:50', '2026-01-02 13:13:50'),
+(52, 10, 7, 'return', '2026-01-18 06:00:00', '2026-01-18 18:00:00', 150000.00, 30, 'scheduled', NULL, '2026-01-02 13:13:50', '2026-01-02 13:13:50'),
+(53, 2, 2, 'return', '2026-01-18 15:00:00', '2026-01-19 03:00:00', 160000.00, 13, 'scheduled', NULL, '2026-01-02 13:14:46', '2026-01-02 13:14:46'),
+(54, 3, 1, 'return', '2026-01-18 15:00:00', '2026-01-19 03:00:00', 160000.00, 30, 'scheduled', NULL, '2026-01-02 13:14:46', '2026-01-02 13:14:46'),
+(55, 15, 4, 'return', '2026-01-18 15:00:00', '2026-01-19 03:00:00', 160000.00, 11, 'scheduled', NULL, '2026-01-02 13:14:46', '2026-01-02 13:14:46'),
+(56, 16, 3, 'return', '2026-01-18 15:00:00', '2026-01-19 03:00:00', 160000.00, 13, 'scheduled', NULL, '2026-01-02 13:14:46', '2026-01-02 13:14:46'),
+(57, 17, 6, 'return', '2026-01-18 15:00:00', '2026-01-19 03:00:00', 160000.00, 12, 'scheduled', NULL, '2026-01-02 13:14:46', '2026-01-03 05:35:39'),
+(58, 18, 5, 'return', '2026-01-18 15:00:00', '2026-01-19 03:00:00', 160000.00, 13, 'scheduled', NULL, '2026-01-02 13:14:46', '2026-01-02 13:14:46'),
+(59, 19, 8, 'return', '2026-01-18 15:00:00', '2026-01-19 03:00:00', 160000.00, 13, 'scheduled', NULL, '2026-01-02 13:14:46', '2026-01-02 13:14:46'),
+(60, 20, 7, 'return', '2026-01-18 15:00:00', '2026-01-19 03:00:00', 160000.00, 13, 'scheduled', NULL, '2026-01-02 13:14:46', '2026-01-02 13:14:46');
 
 -- --------------------------------------------------------
 
@@ -361,7 +436,7 @@ INSERT INTO `seats` (`id`, `bus_id`, `seat_number`, `seat_type`, `status`) VALUE
 (2, 1, '1B', 'Reclining seat premium', 'available'),
 (3, 1, '1C', 'Reclining seat premium', 'available'),
 (4, 1, '1D', 'Reclining seat premium', 'available'),
-(5, 2, '1A', 'Sleeper seat', 'booked'),
+(5, 2, '1A', 'Sleeper seat', 'available'),
 (6, 1, '2A', 'Reclining seat premium', 'available'),
 (7, 1, '2B', 'Reclining seat premium', 'available'),
 (8, 1, '2C', 'Reclining seat premium', 'available'),
@@ -381,7 +456,7 @@ INSERT INTO `seats` (`id`, `bus_id`, `seat_number`, `seat_type`, `status`) VALUE
 (22, 1, '6A', 'Reclining seat premium', 'available'),
 (23, 1, '6B', 'Reclining seat premium', 'available'),
 (24, 1, '6C', 'Reclining seat premium', 'available'),
-(25, 1, '6D', 'Reclining seat premium', 'booked'),
+(25, 1, '6D', 'Reclining seat premium', 'available'),
 (26, 1, '7A', 'Reclining seat premium', 'available'),
 (27, 1, '7B', 'Reclining seat premium', 'available'),
 (28, 1, '7C', 'Reclining seat premium', 'available'),
@@ -478,14 +553,14 @@ INSERT INTO `seats` (`id`, `bus_id`, `seat_number`, `seat_type`, `status`) VALUE
 (119, 6, '7D', 'Reclining seat premium', 'available'),
 (120, 6, '8C', 'Reclining seat premium', 'available'),
 (121, 6, '8D', 'Reclining seat premium', 'available'),
-(122, 7, '1A', 'Reclining seat premium', 'available'),
-(123, 7, '1B', 'Reclining seat premium', 'available'),
-(124, 7, '1C', 'Reclining seat premium', 'available'),
+(122, 7, '1A', 'Reclining seat premium', 'booked'),
+(123, 7, '1B', 'Reclining seat premium', 'booked'),
+(124, 7, '1C', 'Reclining seat premium', 'booked'),
 (125, 7, '1D', 'Reclining seat premium', 'available'),
 (126, 7, '2A', 'Reclining seat premium', 'available'),
 (127, 7, '2B', 'Reclining seat premium', 'available'),
 (128, 7, '2C', 'Reclining seat premium', 'available'),
-(129, 7, '2D', 'Reclining seat premium', 'available'),
+(129, 7, '2D', 'Reclining seat premium', 'booked'),
 (130, 7, '3A', 'Reclining seat premium', 'available'),
 (131, 7, '3B', 'Reclining seat premium', 'available'),
 (132, 7, '3C', 'Reclining seat premium', 'available'),
@@ -899,19 +974,13 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `name`, `email`, `phone`, `password`, `role`, `is_verified`, `verification_token`, `created_at`, `updated_at`) VALUES
 (1, 'admin1', 'admin1@gmail.com', '081227230956', '$2a$12$oeUGvcEBn25Yr5tdt6F5O.T0bT5.5oBodkjUtgFrlfQxr90TPrX06', 'admin', 1, NULL, '2025-12-29 05:27:58', '2026-01-01 13:40:01'),
-(2, 'User1', 'samir20160464@gmail.com', '081227230956', '$2a$12$htG4kjSWH6X2dMNhUAmi0OfUEKkXGN1vsWS3AvkWGw4Cu09oQNIzy', 'user', 1, NULL, '2025-12-30 14:07:36', '2025-12-31 06:37:58'),
-(8, 'Samirudin Annas Alfattah', 'annas20160464@gmail.com', '081227230952', '$2a$12$Rdf9D76PkZ9tcHYR4DQctO2zPKfKWGy.2lFAa/cq.AYBHufmzvaba', 'user', 1, NULL, '2025-12-31 07:00:25', '2026-01-01 13:35:25');
+(2, 'User1', 'user1@gmail.com', '081227230956', '$2a$12$PnjgcCTCkwpSyMa.R/QctePkRlvkv77GVuZEUI48UjeV9f7jcmpkW', 'user', 1, NULL, '2025-12-30 14:07:36', '2026-01-03 05:53:53'),
+(8, 'Samirudin Annas Alfattah', 'annas20160464@gmail.com', '081227230952', '$2a$12$Rdf9D76PkZ9tcHYR4DQctO2zPKfKWGy.2lFAa/cq.AYBHufmzvaba', 'user', 1, NULL, '2025-12-31 07:00:25', '2026-01-01 13:35:25'),
+(10, 'user2', 'user2@gmail.com', '085227230956', '$2y$12$GNT37FqHISea1/Zg8Mtmx.2uTZDDegN4ob2wgtssP7YFxWqmk6S2G', 'user', 1, NULL, '2026-01-03 04:34:39', '2026-01-03 05:49:37');
 
 --
 -- Indeks untuk tabel yang dibuang
 --
-
---
--- Indeks untuk tabel `audit_logs`
---
-ALTER TABLE `audit_logs`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indeks untuk tabel `bookings`
@@ -1006,16 +1075,10 @@ ALTER TABLE `users`
 --
 
 --
--- AUTO_INCREMENT untuk tabel `audit_logs`
---
-ALTER TABLE `audit_logs`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT untuk tabel `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT untuk tabel `buses`
@@ -1039,13 +1102,13 @@ ALTER TABLE `location`
 -- AUTO_INCREMENT untuk tabel `passengers`
 --
 ALTER TABLE `passengers`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT untuk tabel `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT untuk tabel `routes`
@@ -1057,13 +1120,13 @@ ALTER TABLE `routes`
 -- AUTO_INCREMENT untuk tabel `route_location`
 --
 ALTER TABLE `route_location`
-  MODIFY `route_location_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `route_location_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=71;
 
 --
 -- AUTO_INCREMENT untuk tabel `schedules`
 --
 ALTER TABLE `schedules`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 
 --
 -- AUTO_INCREMENT untuk tabel `seats`
@@ -1075,17 +1138,11 @@ ALTER TABLE `seats`
 -- AUTO_INCREMENT untuk tabel `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
 --
-
---
--- Ketidakleluasaan untuk tabel `audit_logs`
---
-ALTER TABLE `audit_logs`
-  ADD CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
 -- Ketidakleluasaan untuk tabel `bookings`

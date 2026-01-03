@@ -309,6 +309,9 @@
                             <a href="<?php echo BASEURL; ?>booking/downloadTicket/<?php echo $booking['id']; ?>" class="btn btn-outline" target="_blank">
                                 <i class="fas fa-download"></i> Download E-Ticket
                             </a>
+                            <button onclick="cancelBooking(<?php echo $booking['id']; ?>)" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Batalkan & Refund
+                            </button>
                         <?php endif; ?>
 
                         <?php if ($booking['booking_status'] === 'pending'): ?>
@@ -337,11 +340,11 @@
 
 <script>
     function cancelBooking(bookingId) {
-        if (!confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
+        if (!confirm('Apakah Anda yakin ingin membatalkan pesanan ini?\n\nJika Anda sudah melakukan pembayaran, dana akan dikembalikan dalam waktu 2x24 jam.')) {
             return;
         }
 
-        fetch('<?php echo BASEURL; ?>booking/cancel/' + bookingId, {
+        fetch('<?php echo BASEURL; ?>user/cancel/' + bookingId, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -350,7 +353,17 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
+                    let message = data.message;
+
+                    if (data.refund_needed) {
+                        message += '\n\n📢 INFORMASI PENTING:\n';
+                        message += '✓ Pembayaran Anda sudah diterima\n';
+                        message += '✓ Dana akan diproses untuk pengembalian (refund)\n';
+                        message += '✓ Proses refund: maksimal 2x24 jam\n';
+                        message += '✓ Admin akan menghubungi Anda untuk konfirmasi';
+                    }
+
+                    alert(message);
                     location.reload();
                 } else {
                     alert(data.message || 'Gagal membatalkan pesanan');
@@ -358,7 +371,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Terjadi kesalahan saat membatalkan pesanan');
+                alert('Terjadi kesalahan saat membatalkan pesanan. Silakan coba lagi.');
             });
     }
 </script>

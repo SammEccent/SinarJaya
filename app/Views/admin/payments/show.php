@@ -6,6 +6,30 @@
 </div>
 
 <div class="admin-body">
+    <?php
+    // Check if this payment needs urgent refund
+    $needs_refund = ($payment['payment_status'] === 'paid' && $payment['booking_status'] === 'cancelled');
+    ?>
+
+    <?php if ($needs_refund): ?>
+        <!-- Priority Alert for Refund -->
+        <div class="priority-alert">
+            <div class="priority-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="priority-content">
+                <h3>⚠️ AKSI PRIORITAS DIBUTUHKAN!</h3>
+                <p><strong>Booking telah dibatalkan namun pembayaran sudah diterima.</strong></p>
+                <p>Dana pelanggan harus segera dikembalikan untuk menghindari komplain dan menjaga kepercayaan pelanggan.</p>
+                <div style="margin-top: 15px;">
+                    <button type="button" class="btn-urgent" onclick="scrollToRefund()">
+                        <i class="fas fa-redo"></i> Proses Refund Sekarang
+                    </button>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <div class="section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
             <h2>Pembayaran #<?php echo htmlspecialchars($payment['id']); ?></h2>
@@ -476,6 +500,122 @@
     .close-modal:focus {
         color: #bbb;
     }
+
+    /* Priority Alert Styles */
+    .priority-alert {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        border: 3px solid #dc2626;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        box-shadow: 0 8px 24px rgba(220, 38, 38, 0.25);
+        animation: priority-pulse 2s infinite;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .priority-alert::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer-priority 3s infinite;
+    }
+
+    @keyframes priority-pulse {
+
+        0%,
+        100% {
+            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.25);
+        }
+
+        50% {
+            box-shadow: 0 12px 32px rgba(220, 38, 38, 0.4);
+        }
+    }
+
+    @keyframes shimmer-priority {
+        0% {
+            left: -100%;
+        }
+
+        100% {
+            left: 100%;
+        }
+    }
+
+    .priority-icon {
+        flex-shrink: 0;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: white;
+        animation: icon-bounce 2s infinite;
+    }
+
+    @keyframes icon-bounce {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-5px);
+        }
+    }
+
+    .priority-content {
+        flex: 1;
+        position: relative;
+        z-index: 1;
+    }
+
+    .priority-content h3 {
+        margin: 0 0 10px 0;
+        color: #991b1b;
+        font-size: 1.4rem;
+        font-weight: 800;
+    }
+
+    .priority-content p {
+        margin: 8px 0;
+        color: #7f1d1d;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .btn-urgent {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-urgent:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+    }
 </style>
 
 <!-- Image Modal -->
@@ -518,6 +658,33 @@
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closeImageModal();
+        }
+    });
+
+    function scrollToRefund() {
+        const refundButton = document.querySelector('button[onclick="showRefundForm()"]');
+        if (refundButton) {
+            refundButton.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+            setTimeout(() => {
+                refundButton.click();
+            }, 500);
+        }
+    }
+
+    // Auto-focus priority alert if exists
+    document.addEventListener('DOMContentLoaded', function() {
+        const priorityAlert = document.querySelector('.priority-alert');
+        if (priorityAlert) {
+            // Smooth scroll to show the alert
+            setTimeout(() => {
+                priorityAlert.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 300);
         }
     });
 </script>

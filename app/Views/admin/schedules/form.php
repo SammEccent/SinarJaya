@@ -27,6 +27,12 @@
                         <option value="<?php echo $b['id']; ?>" <?php echo (isset($schedule) && $schedule['bus_id'] == $b['id']) || (isset($old['bus_id']) && $old['bus_id'] == $b['id']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($b['plate_number'] . ' - ' . ($b['class_name'] ?? '')); ?></option>
                     <?php endforeach; ?>
                 </select>
+                <div id="bus-info" style="margin-top: 10px; padding: 10px; background: #f3f4f6; border-radius: 6px; display: none;">
+                    <div style="font-size: 0.875rem; color: #374151;">
+                        <strong>Status Bus:</strong>
+                        <div id="bus-status-content" style="margin-top: 5px;"></div>
+                    </div>
+                </div>
             </div>
 
             <div>
@@ -117,3 +123,111 @@
         border: 1px solid #3b82f6;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const busSelect = document.getElementById('bus_id');
+        const busInfo = document.getElementById('bus-info');
+        const busStatusContent = document.getElementById('bus-status-content');
+        const routeTypeSelect = document.getElementById('route_type');
+        const routeSelect = document.getElementById('route_id');
+        const departureInput = document.getElementById('departure_datetime');
+
+        // When bus is selected, fetch its latest schedule
+        busSelect.addEventListener('change', function() {
+            const busId = this.value;
+
+            if (!busId) {
+                busInfo.style.display = 'none';
+                return;
+            }
+
+            // Fetch latest schedule for this bus
+            fetch('<?php echo BASEURL; ?>admin/schedules/get-bus-latest-schedule/' + busId)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.has_schedule) {
+                        const schedule = data.schedule;
+                        const routeTypeText = schedule.route_type === 'forward' ? 'Arus Berangkat' : 'Arus Balik';
+                        const nextRouteType = schedule.route_type === 'forward' ? 'return' : 'forward';
+                        const nextRouteTypeText = nextRouteType === 'return' ? 'Arus Balik' : 'Arus Berangkat';
+
+                        let html = `
+                        <div style="padding: 8px; background: #dbeafe; border-left: 3px solid #3b82f6; margin-bottom: 8px;">
+                            <strong>Jadwal Terakhir:</strong><br>
+                            ${routeTypeText}: ${schedule.origin_city} → ${schedule.destination_city}<br>
+                            Tiba: ${schedule.arrival_datetime}
+                        </div>
+                        <div style="padding: 8px; background: #fef3c7; border-left: 3px solid #f59e0b;">
+                            <strong>⚠️ Jadwal Berikutnya Harus:</strong><br>
+                            • Jenis Arus: <strong>${nextRouteTypeText}</strong><br>
+                            • Titik Keberangkatan: <strong>${schedule.destination_city}</strong><br>
+                            • Waktu Berangkat: <strong>LEBIH DARI</strong> ${schedule.arrival_datetime}<br>
+                            <small style="color: #92400e;">⚠️ Tidak boleh sama atau lebih cepat dari waktu tiba</small>
+                        </div>
+                    `;
+
+                        busStatusContent.innerHTML = html;
+                        busInfo.style.display = 'block';
+
+                        // Auto-set the route type
+                        routeTypeSelect.value = nextRouteType;
+
+                        // Filter routes that start from destination city
+                        filterRoutesByOrigin(schedule.destination_city);
+                    } else {
+                        busStatusContent.innerHTML = '<div style="padding: 8px; background: #d1fae5; border-left: 3px solid #10b981;">✓ Bus bebas, dapat dijadwalkan dengan rute dan arus apapun</div>';
+                        busInfo.style.display = 'block';
+
+                        // Reset route filter
+                        filterRoutesByOrigin(null);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching bus schedule:', error);
+                    busInfo.style.display = 'none';
+                });
+        });
+
+        function filterRoutesByOrigin(requiredOrigin) {
+            const options = routeSelect.querySelectorAll('option');
+
+            options.forEach(option => {
+                if (option.value === '') return; // Skip empty option
+
+                if (!requiredOrigin) {
+                    // No filter, show all
+                    option.style.display = '';
+                    option.disabled = false;
+                } else {
+                    // Extract origin city from option text (format: "CODE - Origin → Destination")
+                    const text = option.textContent;
+                    const match = text.match(/- (.+?) → /);
+
+                    if (match) {
+                        const originCity = match[1].trim();
+
+                        if (originCity === requiredOrigin) {
+                            option.style.display = '';
+                            option.disabled = false;
+                        } else {
+                            option.style.display = 'none';
+                            option.disabled = true;
+                        }
+                    }
+                }
+            });
+
+            // Reset selection if current selection is now hidden
+            const currentOption = routeSelect.options[routeSelect.selectedIndex];
+            if (currentOption && currentOption.disabled) {
+                routeSelect.value = '';
+            }
+        }
+
+        // Trigger on page load if bus is already selected
+        if (busSelect.value) {
+            busSelect.dispatchEvent(new Event('change'));
+        }
+    });
+</script>

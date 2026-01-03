@@ -1,0 +1,97 @@
+# ================================================
+# GITIGNORE FOR SINAR JAYA BUS BOOKING SYSTEM
+# Production-ready configuration
+# ================================================
+
+# ============================================
+# PHP & Composer
+# ============================================
+vendor/
+composer.phar
+composer.lock
+
+# ============================================
+# Configuration Files (SENSITIVE)
+# ============================================
+app/config/config.php
+app/config/database.php
+.env
+.env.local
+.env.production
+
+# ============================================
+# Upload Directories
+# ============================================
+public/uploads/payments/*
+public/uploads/tickets/*
+!public/uploads/payments/.gitkeep
+!public/uploads/tickets/.gitkeep
+!public/uploads/.htaccess
+
+# ============================================
+# Logs & Temporary Files
+# ============================================
+*.log
+logs/
+temp/
+tmp/
+cache/
+*.tmp
+*.cache
+
+# ============================================
+# IDE & Editor Files
+# ============================================
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================
+# System Files
+# ============================================
+*.bak
+*.old
+*.orig
+*.rej
+*.backup
+*~
+
+# ============================================
+# Development & Testing
+# ============================================
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+# ============================================
+# Documentation (Optional)
+# ============================================
+# Uncomment if you don't want to commit docs
+# *.md
+# docs/
+
+# ============================================
+# Database
+# ============================================
+*.sql
+*.sqlite
+*.db
+!sinarjaya_db.sql
+
+# ============================================
+# Node Modules (if using frontend tools)
+# ============================================
+node_modules/
+package-lock.json
+yarn.lock
+
+# ============================================
+# Build & Distribution
+# ============================================
+dist/
+build/

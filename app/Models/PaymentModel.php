@@ -35,7 +35,9 @@ class PaymentModel
                 FROM payments p
                 JOIN bookings b ON p.booking_id = b.id
                 JOIN users u ON b.user_id = u.id
-                ORDER BY p.created_at DESC';
+                ORDER BY 
+                    CASE WHEN p.payment_status = "paid" AND b.booking_status = "cancelled" THEN 0 ELSE 1 END,
+                    p.created_at DESC';
 
         if ($limit !== null) {
             $query .= ' LIMIT ' . intval($limit) . ' OFFSET ' . intval($offset);
@@ -165,6 +167,40 @@ class PaymentModel
     }
 
     /**
+     * Get payments that need refund (paid but booking cancelled)
+     */
+    public function getNeedsRefund()
+    {
+        $this->db->prepare('
+            SELECT 
+                p.id, 
+                p.booking_id, 
+                p.payment_method, 
+                p.payment_code, 
+                p.amount, 
+                p.payment_status, 
+                p.payment_proof_image,
+                p.paid_at,
+                p.created_at,
+                p.updated_at,
+                b.booking_code,
+                b.user_id,
+                b.total_amount,
+                b.booking_status,
+                u.name,
+                u.email,
+                u.phone
+            FROM payments p
+            JOIN bookings b ON p.booking_id = b.id
+            JOIN users u ON b.user_id = u.id
+            WHERE p.payment_status = "paid" 
+                AND b.booking_status = "cancelled"
+            ORDER BY p.updated_at DESC
+        ');
+        return $this->db->fetchAll();
+    }
+
+    /**
      * Get payment statistics
      */
     public function getStatistics()
@@ -172,13 +208,15 @@ class PaymentModel
         $this->db->prepare('
             SELECT 
                 COUNT(*) as total_payments,
-                SUM(CASE WHEN payment_status = "paid" THEN 1 ELSE 0 END) as paid_payments,
-                SUM(CASE WHEN payment_status = "pending" THEN 1 ELSE 0 END) as pending_payments,
-                SUM(CASE WHEN payment_status = "failed" THEN 1 ELSE 0 END) as failed_payments,
-                SUM(CASE WHEN payment_status = "refunded" THEN 1 ELSE 0 END) as refunded_payments,
-                SUM(CASE WHEN payment_status = "paid" THEN amount ELSE 0 END) as total_revenue,
-                AVG(amount) as average_payment
-            FROM payments
+                SUM(CASE WHEN p.payment_status = "paid" THEN 1 ELSE 0 END) as paid_payments,
+                SUM(CASE WHEN p.payment_status = "pending" THEN 1 ELSE 0 END) as pending_payments,
+                SUM(CASE WHEN p.payment_status = "failed" THEN 1 ELSE 0 END) as failed_payments,
+                SUM(CASE WHEN p.payment_status = "refunded" THEN 1 ELSE 0 END) as refunded_payments,
+                SUM(CASE WHEN p.payment_status = "paid" AND b.booking_status = "cancelled" THEN 1 ELSE 0 END) as needs_refund,
+                SUM(CASE WHEN p.payment_status = "paid" THEN p.amount ELSE 0 END) as total_revenue,
+                AVG(p.amount) as average_payment
+            FROM payments p
+            LEFT JOIN bookings b ON p.booking_id = b.id
         ');
         return $this->db->fetch();
     }
@@ -339,6 +377,7 @@ class PaymentModel
             SELECT 
                 p.*,
                 b.booking_code,
+                b.booking_status,
                 u.name,
                 u.email
             FROM payments p
@@ -348,7 +387,9 @@ class PaymentModel
                 OR u.name LIKE :keyword 
                 OR u.email LIKE :keyword
                 OR p.payment_code LIKE :keyword
-            ORDER BY p.created_at DESC
+            ORDER BY 
+                CASE WHEN p.payment_status = "paid" AND b.booking_status = "cancelled" THEN 0 ELSE 1 END,
+                p.created_at DESC
         ');
         $keyword = '%' . $keyword . '%';
         $this->db->bind(':keyword', $keyword);

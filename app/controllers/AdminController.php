@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../Helpers/DatabaseErrorHelper.php';
+
 class AdminController extends Controller
 {
     protected $userModel;
@@ -24,10 +26,6 @@ class AdminController extends Controller
         $this->bookingModel = $this->model('BookingModel');
         $this->passengerModel = $this->model('PassengerModel');
         $this->paymentModel = $this->model('PaymentModel');
-        // Ensure session started
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
     }
 
     // Default action for /admin
@@ -184,7 +182,12 @@ class AdminController extends Controller
     public function busesDelete($id = null)
     {
         if ($id) {
-            $this->busModel->delete($id);
+            try {
+                $this->busModel->delete($id);
+                $_SESSION['success'] = 'Bus berhasil dihapus';
+            } catch (Exception $e) {
+                $_SESSION['error'] = DatabaseErrorHelper::getConstraintErrorMessage($e, 'bus');
+            }
         }
         header('Location: ' . BASEURL . 'admin/buses');
         exit;
@@ -233,7 +236,14 @@ class AdminController extends Controller
 
     public function seatDelete($seat_id = null)
     {
-        if ($seat_id) $this->seatModel->delete($seat_id);
+        if ($seat_id) {
+            try {
+                $this->seatModel->delete($seat_id);
+                $_SESSION['success'] = 'Kursi berhasil dihapus';
+            } catch (Exception $e) {
+                $_SESSION['error'] = DatabaseErrorHelper::getConstraintErrorMessage($e, 'seat');
+            }
+        }
         header('Location: ' . $_SERVER['HTTP_REFERER'] ?? BASEURL . 'admin/buses');
         exit;
     }
@@ -316,7 +326,12 @@ class AdminController extends Controller
     public function routesDelete($id = null)
     {
         if ($id) {
-            $this->routeModel->delete($id);
+            try {
+                $this->routeModel->delete($id);
+                $_SESSION['success'] = 'Rute berhasil dihapus';
+            } catch (Exception $e) {
+                $_SESSION['error'] = DatabaseErrorHelper::getConstraintErrorMessage($e, 'route');
+            }
         }
         header('Location: ' . BASEURL . 'admin/routes');
         exit;
@@ -364,7 +379,13 @@ class AdminController extends Controller
             $location = $db->fetch();
             $route_id = $location['route_id'] ?? null;
 
-            $this->routeModel->removeRouteLocation($route_location_id);
+            try {
+                $this->routeModel->removeRouteLocation($route_location_id);
+                $_SESSION['success'] = 'Lokasi rute berhasil dihapus';
+            } catch (Exception $e) {
+                $_SESSION['error'] = DatabaseErrorHelper::getConstraintErrorMessage($e, 'route_location');
+            }
+
             if ($route_id) {
                 header('Location: ' . BASEURL . 'admin/routes/' . $route_id . '/locations');
                 exit;
@@ -381,6 +402,7 @@ class AdminController extends Controller
      * - /admin/schedules/create -> schedulesCreate()
      * - /admin/schedules/edit/{id} -> schedulesEdit($id)
      * - /admin/schedules/delete/{id} -> schedulesDelete($id)
+     * - /admin/schedules/get-bus-latest-schedule/{bus_id} -> schedulesGetBusLatestSchedule($bus_id)
      */
     public function schedules()
     {
@@ -395,6 +417,51 @@ class AdminController extends Controller
         $schedules = $this->scheduleModel->getAll();
         $data = ['schedules' => $schedules];
         $this->renderDashboard('admin/schedules/index', $data);
+    }
+
+    /**
+     * API endpoint to get latest schedule for a bus
+     */
+    public function schedulesGetBusLatestSchedule($bus_id = null)
+    {
+        header('Content-Type: application/json');
+
+        if (!$bus_id) {
+            echo json_encode(['has_schedule' => false]);
+            exit;
+        }
+
+        // Get latest schedule for this bus
+        $db = new Database();
+        $db->prepare("
+            SELECT s.*, r.origin_city, r.destination_city, r.route_code
+            FROM schedules s
+            JOIN routes r ON s.route_id = r.route_id
+            WHERE s.bus_id = :bus_id
+            AND s.status IN ('scheduled', 'departed')
+            ORDER BY s.arrival_datetime DESC
+            LIMIT 1
+        ");
+        $db->bind(':bus_id', $bus_id);
+        $schedule = $db->fetch();
+
+        if ($schedule) {
+            echo json_encode([
+                'has_schedule' => true,
+                'schedule' => [
+                    'id' => $schedule['id'],
+                    'route_type' => $schedule['route_type'],
+                    'origin_city' => $schedule['origin_city'],
+                    'destination_city' => $schedule['destination_city'],
+                    'route_code' => $schedule['route_code'],
+                    'departure_datetime' => date('d/m/Y H:i', strtotime($schedule['departure_datetime'])),
+                    'arrival_datetime' => date('d/m/Y H:i', strtotime($schedule['arrival_datetime'])),
+                ]
+            ]);
+        } else {
+            echo json_encode(['has_schedule' => false]);
+        }
+        exit;
     }
 
     public function schedulesCreate()
@@ -516,7 +583,12 @@ class AdminController extends Controller
     public function schedulesDelete($id = null)
     {
         if ($id) {
-            $this->scheduleModel->delete($id);
+            try {
+                $this->scheduleModel->delete($id);
+                $_SESSION['success'] = 'Jadwal berhasil dihapus';
+            } catch (Exception $e) {
+                $_SESSION['error'] = DatabaseErrorHelper::getConstraintErrorMessage($e, 'schedule');
+            }
         }
         header('Location: ' . BASEURL . 'admin/schedules');
         exit;
@@ -584,37 +656,52 @@ class AdminController extends Controller
             exit;
         }
 
-        $this->renderDashboard('admin/bookings/show', ['booking' => $booking]);
+        // Get passengers data
+        $passengers = $this->bookingModel->getPassengers($id);
+
+        // Get payment data
+        $payment = $this->paymentModel->getByBookingId($id);
+
+        $this->renderDashboard('admin/bookings/show', [
+            'booking' => $booking,
+            'passengers' => $passengers,
+            'payment' => $payment
+        ]);
     }
 
     public function bookingsDelete($id = null)
     {
         if ($id) {
-            // Get booking before delete
-            $booking = $this->bookingModel->findById($id);
+            try {
+                // Get booking before delete
+                $booking = $this->bookingModel->findById($id);
 
-            if ($booking) {
-                // Release booked seats back to available
-                $passengers = $this->bookingModel->getPassengers($id);
-                $seat_ids = [];
-                foreach ($passengers as $passenger) {
-                    if (!empty($passenger['seat_id'])) {
-                        $seat_ids[] = $passenger['seat_id'];
+                if ($booking) {
+                    // Release booked seats back to available
+                    $passengers = $this->bookingModel->getPassengers($id);
+                    $seat_ids = [];
+                    foreach ($passengers as $passenger) {
+                        if (!empty($passenger['seat_id'])) {
+                            $seat_ids[] = $passenger['seat_id'];
+                        }
                     }
-                }
-                if (!empty($seat_ids)) {
-                    $this->seatModel->updateMultipleStatus($seat_ids, 'available');
-                }
+                    if (!empty($seat_ids)) {
+                        $this->seatModel->updateMultipleStatus($seat_ids, 'available');
+                    }
 
-                // Restore available seats count
-                $schedule = $this->scheduleModel->findById($booking['schedule_id']);
-                if ($schedule) {
-                    $new_available = $schedule['available_seats'] + $booking['total_passengers'];
-                    $this->scheduleModel->update($booking['schedule_id'], array_merge($schedule, ['available_seats' => $new_available]));
-                }
+                    // Restore available seats count
+                    $schedule = $this->scheduleModel->findById($booking['schedule_id']);
+                    if ($schedule) {
+                        $new_available = $schedule['available_seats'] + $booking['total_passengers'];
+                        $this->scheduleModel->update($booking['schedule_id'], array_merge($schedule, ['available_seats' => $new_available]));
+                    }
 
-                // Delete booking (and passengers via cascade)
-                $this->bookingModel->delete($id);
+                    // Delete booking (and passengers via cascade)
+                    $this->bookingModel->delete($id);
+                    $_SESSION['success'] = 'Pemesanan berhasil dihapus';
+                }
+            } catch (Exception $e) {
+                $_SESSION['error'] = DatabaseErrorHelper::getConstraintErrorMessage($e, 'booking');
             }
         }
         header('Location: ' . BASEURL . 'admin/bookings');
@@ -682,7 +769,14 @@ class AdminController extends Controller
         if ($passenger_id) {
             $p = $this->passengerModel->findById($passenger_id);
             $booking_id = $p['booking_id'] ?? null;
-            $this->passengerModel->delete($passenger_id);
+
+            try {
+                $this->passengerModel->delete($passenger_id);
+                $_SESSION['success'] = 'Data penumpang berhasil dihapus';
+            } catch (Exception $e) {
+                $_SESSION['error'] = DatabaseErrorHelper::getConstraintErrorMessage($e, 'passenger');
+            }
+
             if ($booking_id) {
                 header('Location: ' . BASEURL . 'admin/bookings/edit/' . $booking_id);
                 exit;
@@ -710,7 +804,15 @@ class AdminController extends Controller
         // Handle search
         $search = trim($_GET['search'] ?? '');
 
-        if ($search) {
+        // Handle filter for needs_refund
+        $filter = $_GET['filter'] ?? '';
+
+        if ($filter === 'needs_refund') {
+            // Get only payments that need refund (paid but booking cancelled)
+            $payments = $this->paymentModel->getNeedsRefund();
+            $total = count($payments);
+            $payments = array_slice($payments, $offset, $perPage);
+        } elseif ($search) {
             $payments = $this->paymentModel->search($search);
             $total = count($payments);
             $payments = array_slice($payments, $offset, $perPage);
@@ -940,8 +1042,12 @@ class AdminController extends Controller
         }
 
         if ($id) {
-            $this->paymentModel->delete($id);
-            $_SESSION['success'] = 'Pembayaran berhasil dihapus';
+            try {
+                $this->paymentModel->delete($id);
+                $_SESSION['success'] = 'Pembayaran berhasil dihapus';
+            } catch (Exception $e) {
+                $_SESSION['error'] = DatabaseErrorHelper::getConstraintErrorMessage($e, 'payment');
+            }
         }
 
         header('Location: ' . BASEURL . 'admin/payments');
@@ -1066,13 +1172,18 @@ class AdminController extends Controller
 
         // to prevent admin from deleting themselves
         if (isset($_SESSION['user_id']) && $id == $_SESSION['user_id']) {
-            // Cannot delete self, maybe set a flash message
+            $_SESSION['error'] = 'Anda tidak dapat menghapus akun Anda sendiri';
             header('Location: ' . BASEURL . 'admin/users');
             exit;
         }
 
+        try {
+            $this->userModel->delete($id);
+            $_SESSION['success'] = 'Pengguna berhasil dihapus';
+        } catch (Exception $e) {
+            $_SESSION['error'] = DatabaseErrorHelper::getConstraintErrorMessage($e, 'user');
+        }
 
-        $this->userModel->delete($id);
         header('Location: ' . BASEURL . 'admin/users');
         exit;
     }

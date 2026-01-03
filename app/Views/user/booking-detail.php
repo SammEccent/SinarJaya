@@ -387,8 +387,11 @@
                 <a href="<?php echo BASEURL; ?>booking/downloadTicket/<?php echo $booking['id']; ?>" class="btn btn-primary" target="_blank">
                     <i class="fas fa-download"></i> Download E-Ticket PDF
                 </a>
-                <button onclick="window.print()" class="btn btn-outline" style="margin-left: 10px;">
+                <button onclick="window.print()" class="btn btn-outline" style="border: 2px solid #667eea;">
                     <i class="fas fa-print"></i> Cetak Halaman Ini
+                </button>
+                <button onclick="cancelBooking(<?php echo $booking['id']; ?>)" class="btn btn-danger">
+                    <i class="fas fa-undo"></i> Batalkan & Refund
                 </button>
             <?php endif; ?>
         </div>
@@ -397,11 +400,11 @@
 
 <script>
     function cancelBooking(bookingId) {
-        if (!confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
+        if (!confirm('Apakah Anda yakin ingin membatalkan pesanan ini?\n\nJika Anda sudah melakukan pembayaran, dana akan dikembalikan dalam waktu 2x24 jam.')) {
             return;
         }
 
-        fetch('<?php echo BASEURL; ?>booking/cancel/' + bookingId, {
+        fetch('<?php echo BASEURL; ?>user/cancel/' + bookingId, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -410,7 +413,17 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
+                    let message = data.message;
+
+                    if (data.refund_needed) {
+                        message += '\n\n📢 INFORMASI PENTING:\n';
+                        message += '✓ Pembayaran Anda sudah diterima\n';
+                        message += '✓ Dana akan diproses untuk pengembalian (refund)\n';
+                        message += '✓ Proses refund: maksimal 2x24 jam\n';
+                        message += '✓ Admin akan menghubungi Anda untuk konfirmasi';
+                    }
+
+                    alert(message);
                     location.reload();
                 } else {
                     alert(data.message || 'Gagal membatalkan pesanan');
@@ -418,7 +431,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Terjadi kesalahan saat membatalkan pesanan');
+                alert('Terjadi kesalahan saat membatalkan pesanan. Silakan coba lagi.');
             });
     }
 </script>

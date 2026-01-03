@@ -5,8 +5,7 @@
     </div>
 </div>
 
-<div class="admin-body">
-    <div class="section">
+<div class="admin-body"> <?php require_once __DIR__ . '/../../partials/admin_alerts.php'; ?> <div class="section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h2>Daftar Pemesanan</h2>
         </div>
@@ -37,16 +36,16 @@
                                 <td style="text-align: right;">Rp <?php echo number_format($b['total_amount'], 0, ',', '.'); ?></td>
                                 <td>
                                     <?php
-                                        $status_class = 'badge-secondary'; // Default
-                                        if ($b['booking_status'] === 'confirmed') {
-                                            $status_class = 'badge-success';
-                                        } elseif ($b['booking_status'] === 'pending') {
-                                            $status_class = 'badge-warning';
-                                        } elseif ($b['booking_status'] === 'cancelled') {
-                                            $status_class = 'badge-danger';
-                                        } elseif ($b['booking_status'] === 'completed') {
-                                            $status_class = 'badge-info';
-                                        }
+                                    $status_class = 'badge-secondary'; // Default
+                                    if ($b['booking_status'] === 'confirmed') {
+                                        $status_class = 'badge-success';
+                                    } elseif ($b['booking_status'] === 'pending') {
+                                        $status_class = 'badge-warning';
+                                    } elseif ($b['booking_status'] === 'cancelled') {
+                                        $status_class = 'badge-danger';
+                                    } elseif ($b['booking_status'] === 'completed') {
+                                        $status_class = 'badge-info';
+                                    }
                                     ?>
                                     <span class="badge <?php echo $status_class; ?>">
                                         <?php echo ucfirst(htmlspecialchars($b['booking_status'])); ?>

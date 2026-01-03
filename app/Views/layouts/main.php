@@ -70,17 +70,17 @@
                 <div class="footer-section">
                     <h4>Layanan</h4>
                     <ul>
-                        <li><a href="#">Pesan Tiket</a></li>
-                        <li><a href="#">Cek Jadwal</a></li>
-                        <li><a href="#">Lacak Pesanan</a></li>
+                        <li><a href="<?php echo BASEURL; ?>#search-section">Pesan Tiket</a></li>
+                        <li><a href="<?php echo BASEURL; ?>#search-section">Cek Jadwal</a></li>
+                        <li><a href="<?php echo BASEURL; ?>user/bookings">Lacak Pesanan</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h4>Informasi</h4>
                     <ul>
-                        <li><a href="#">Tentang Kami</a></li>
-                        <li><a href="#">Kebijakan Privasi</a></li>
-                        <li><a href="#">Syarat & Ketentuan</a></li>
+                        <li><a href="<?php echo BASEURL; ?>home/about">Tentang Kami</a></li>
+                        <li><a href="<?php echo BASEURL; ?>home/privacy">Kebijakan Privasi</a></li>
+                        <li><a href="<?php echo BASEURL; ?>home/terms">Syarat & Ketentuan</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">

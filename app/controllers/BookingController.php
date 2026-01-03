@@ -8,9 +8,6 @@ class BookingController extends Controller
 
     public function __construct()
     {
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
         $this->bookingModel = $this->model('BookingModel');
         $this->scheduleModel = $this->model('ScheduleModel');
         $this->seatModel = $this->model('SeatModel');
@@ -255,6 +252,17 @@ class BookingController extends Controller
             exit;
         }
 
+        // IMPORTANT: Check if selected seats are still available
+        // This prevents race condition where multiple users book the same seat
+        if (!empty($seat_ids)) {
+            $seatModel = $this->model('SeatModel');
+            if (!$seatModel->checkSeatsAvailability($seat_ids, $schedule_id)) {
+                $_SESSION['error'] = 'Maaf, salah satu atau lebih kursi yang Anda pilih sudah dipesan oleh penumpang lain. Silakan pilih kursi lain.';
+                header('Location: ' . BASEURL . 'booking/selectSeats?schedule_id=' . $schedule_id . '&passengers=' . $passengers_count);
+                exit;
+            }
+        }
+
         // Verify available seats
         if ($schedule['available_seats'] < $passengers_count) {
             $_SESSION['error'] = 'Kursi yang tersedia tidak mencukupi';
@@ -304,10 +312,9 @@ class BookingController extends Controller
             $passengerModel->create($passenger_data);
         }
 
-        // Update seat status to 'booked'
-        if (!empty($seat_ids)) {
-            $this->seatModel->updateMultipleStatus($seat_ids, 'booked');
-        }
+        // Note: Seat status is tracked through passengers table relationship
+        // No need to update seats.status column as getAvailableSeatsForSchedule() 
+        // checks the passengers-bookings relationship for real-time status
 
         // Update available seats
         $new_available_seats = $schedule['available_seats'] - $passengers_count;
@@ -460,29 +467,6 @@ class BookingController extends Controller
         $date_part = date('Ymd');
         $random_part = str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
         return 'SJ-' . $date_part . $random_part;
-    }
-
-    /**
-     * Render view with layout
-     */
-    protected function renderWithLayout($view, $data = [])
-    {
-        extract($data);
-        ob_start();
-
-        if (file_exists('../app/Views/' . $view . '.php')) {
-            require_once '../app/Views/' . $view . '.php';
-        } else {
-            die('View does not exist: ' . $view);
-        }
-
-        $content = ob_get_clean();
-
-        if (file_exists('../app/Views/layouts/main.php')) {
-            require_once '../app/Views/layouts/main.php';
-        } else {
-            die('Layout does not exist');
-        }
     }
 
     /**

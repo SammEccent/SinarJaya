@@ -7,9 +7,6 @@ class PaymentController extends Controller
 
     public function __construct()
     {
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
         $this->paymentModel = $this->model('PaymentModel');
         $this->bookingModel = $this->model('BookingModel');
     }
@@ -355,7 +352,7 @@ class PaymentController extends Controller
         // Upload file
         $uploadDir = 'uploads/payments/';
         if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
+            mkdir($uploadDir, 0755, true); // 0755 instead of 0777 for better security
         }
 
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
@@ -477,21 +474,5 @@ class PaymentController extends Controller
         ];
 
         return $instructions[$method] ?? [];
-    }
-
-    /**
-     * Render view with layout
-     */
-    private function renderWithLayout($view, $data = [])
-    {
-        extract($data);
-
-        // Capture the view content
-        ob_start();
-        require_once '../app/Views/' . $view . '.php';
-        $content = ob_get_clean();
-
-        // Load the layout with content
-        require_once '../app/Views/layouts/main.php';
     }
 }

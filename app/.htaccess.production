@@ -1,0 +1,24 @@
+# ================================================
+# APP FOLDER PROTECTION
+# Prevent direct access to application files
+# ================================================
+
+# Block all access to app folder
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>
+
+# Additional protection
+Options -Indexes
+Options -ExecCGI
+
+# Block specific file types
+<FilesMatch "\.(php|inc|module|sh|pl|py)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>

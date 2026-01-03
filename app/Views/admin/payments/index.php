@@ -6,6 +6,7 @@
 </div>
 
 <div class="admin-body">
+    <?php require_once __DIR__ . '/../../partials/admin_alerts.php'; ?>
     <!-- Statistics Cards -->
     <div class="stats-container">
         <div class="stat-card">
@@ -47,6 +48,20 @@
                 <p class="stat-value"><?php echo isset($statistics['refunded_payments']) ? $statistics['refunded_payments'] : 0; ?></p>
             </div>
         </div>
+
+        <!-- Refund Priority Card -->
+        <?php if (isset($statistics['needs_refund']) && $statistics['needs_refund'] > 0): ?>
+            <div class="stat-card priority-card" style="border: 2px solid #dc2626; animation: pulse-border 2s infinite;">
+                <div class="stat-icon" style="background: #fef2f2; color: #dc2626;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <p class="stat-label" style="color: #dc2626; font-weight: 600;">⚠️ Perlu Refund</p>
+                    <p class="stat-value" style="color: #dc2626;"><?php echo $statistics['needs_refund']; ?></p>
+                    <p style="font-size: 0.75rem; color: #991b1b; margin: 5px 0 0 0;">Dibatalkan tapi sudah bayar</p>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="section">
@@ -55,8 +70,19 @@
             <h2>Daftar Pembayaran</h2>
             <form action="" method="GET" style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <input type="text" name="search" placeholder="Cari booking, customer, atau kode pembayaran..." value="<?php echo htmlspecialchars($search ?? ''); ?>" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 300px;">
+
+                <!-- Quick Filter for Priority Refunds -->
+                <?php if (isset($statistics['needs_refund']) && $statistics['needs_refund'] > 0): ?>
+                    <a href="<?php echo BASEURL; ?>admin/payments?filter=needs_refund"
+                        class="btn <?php echo (isset($_GET['filter']) && $_GET['filter'] === 'needs_refund') ? 'btn-danger' : 'btn-outline-danger'; ?>"
+                        style="padding: 8px 16px; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Perlu Refund (<?php echo $statistics['needs_refund']; ?>)
+                    </a>
+                <?php endif; ?>
+
                 <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">Cari</button>
-                <?php if ($search): ?>
+                <?php if ($search || (isset($_GET['filter']) && $_GET['filter'] === 'needs_refund')): ?>
                     <a href="<?php echo BASEURL; ?>admin/payments" class="btn btn-outline" style="padding: 8px 16px;">Reset</a>
                 <?php endif; ?>
             </form>
@@ -77,8 +103,21 @@
                     </thead>
                     <tbody>
                         <?php foreach ($payments as $payment): ?>
-                            <tr>
-                                <td><strong><?php echo htmlspecialchars($payment['booking_code']); ?></strong></td>
+                            <?php
+                            // Check if this payment needs refund (paid but booking cancelled)
+                            $needs_refund = ($payment['payment_status'] === 'paid' && $payment['booking_status'] === 'cancelled');
+                            ?>
+                            <tr <?php echo $needs_refund ? 'style="background: #fef2f2; border-left: 4px solid #dc2626;"' : ''; ?>>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <strong><?php echo htmlspecialchars($payment['booking_code']); ?></strong>
+                                        <?php if ($needs_refund): ?>
+                                            <span class="priority-badge" title="Booking dibatalkan, perlu refund segera!">
+                                                <i class="fas fa-exclamation-circle"></i> PRIORITAS
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
                                 <td>
                                     <div style="margin: 0;"><?php echo htmlspecialchars($payment['name']); ?></div>
                                     <small style="color: #6b7280; display: block; margin-top: 2px;"><?php echo htmlspecialchars($payment['email']); ?></small>
@@ -97,7 +136,8 @@
                                 </td>
                                 <td style="text-align: right; font-weight: 500;">Rp <?php echo number_format($payment['amount'], 0, ',', '.'); ?></td>
                                 <td>
-                                    <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 500; white-space: nowrap;
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 500; white-space: nowrap;
                                     <?php
                                     $status = $payment['payment_status'];
                                     if ($status === 'paid'):
@@ -111,16 +151,22 @@
                                     endif;
                                     ?>
                                     ">
-                                        <?php
-                                        $status_labels = [
-                                            'pending' => 'Pending',
-                                            'paid' => 'Dibayar',
-                                            'failed' => 'Gagal',
-                                            'refunded' => 'Dikembalikan'
-                                        ];
-                                        echo htmlspecialchars($status_labels[$status] ?? ucfirst($status));
-                                        ?>
-                                    </span>
+                                            <?php
+                                            $status_labels = [
+                                                'pending' => 'Pending',
+                                                'paid' => 'Dibayar',
+                                                'failed' => 'Gagal',
+                                                'refunded' => 'Dikembalikan'
+                                            ];
+                                            echo htmlspecialchars($status_labels[$status] ?? ucfirst($status));
+                                            ?>
+                                        </span>
+                                        <?php if ($payment['booking_status'] === 'cancelled'): ?>
+                                            <span style="padding: 3px 6px; border-radius: 3px; font-size: 0.75rem; font-weight: 500; background: #fee2e2; color: #991b1b;">
+                                                <i class="fas fa-ban"></i> Booking Batal
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                                 <td style="text-align: center; white-space: nowrap;">
                                     <a href="<?php echo BASEURL; ?>admin/payments/<?php echo $payment['id']; ?>" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; margin: 2px;">Detail</a>
@@ -303,6 +349,16 @@
         background-color: #b91c1c;
     }
 
+    .btn-outline-danger {
+        background-color: transparent;
+        color: #dc2626;
+        border: 2px solid #dc2626;
+    }
+
+    .btn-outline-danger:hover {
+        background-color: #fef2f2;
+    }
+
     input[type="text"] {
         border: 1px solid #d1d5db;
         padding: 8px 12px;
@@ -314,5 +370,72 @@
         outline: none;
         border-color: #1e40af;
         box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+
+    /* Priority Styles */
+    .priority-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        color: white;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        animation: pulse-glow 2s infinite;
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+    }
+
+    @keyframes pulse-glow {
+
+        0%,
+        100% {
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+        }
+
+        50% {
+            box-shadow: 0 4px 16px rgba(220, 38, 38, 0.6);
+        }
+    }
+
+    @keyframes pulse-border {
+
+        0%,
+        100% {
+            border-color: #dc2626;
+        }
+
+        50% {
+            border-color: #ef4444;
+        }
+    }
+
+    .priority-card {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .priority-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.1), transparent);
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            left: -100%;
+        }
+
+        100% {
+            left: 100%;
+        }
     }
 </style>

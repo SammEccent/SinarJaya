@@ -518,17 +518,6 @@
                                     required>
                             </div>
                         </div>
-
-                        <div class="form-group">
-                            <label for="passenger_special_request_<?php echo $i; ?>">
-                                Permintaan Khusus (Opsional)
-                            </label>
-                            <textarea
-                                name="passenger_special_request[]"
-                                id="passenger_special_request_<?php echo $i; ?>"
-                                placeholder="Contoh: Alergi makanan, butuh kursi roda, dll"
-                                rows="2"></textarea>
-                        </div>
                     </div>
                 <?php endfor; ?>
             </div>

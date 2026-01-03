@@ -46,6 +46,34 @@ class HomeController extends Controller
     }
 
     /**
+     * Display the privacy policy page
+     */
+    public function privacy()
+    {
+        // Get data for the privacy page
+        $data = [
+            'title' => 'Kebijakan Privasi'
+        ];
+
+        // Render the layout with privacy page content
+        $this->renderWithLayout('home/privacy', $data);
+    }
+
+    /**
+     * Display the terms and conditions page
+     */
+    public function terms()
+    {
+        // Get data for the terms page
+        $data = [
+            'title' => 'Syarat & Ketentuan'
+        ];
+
+        // Render the layout with terms page content
+        $this->renderWithLayout('home/terms', $data);
+    }
+
+    /**
      * Search for available tickets
      */
     public function search()
@@ -110,37 +138,5 @@ class HomeController extends Controller
 
         // Render search results page
         $this->renderWithLayout('home/search-results', $data);
-    }
-
-    /**
-     * Render view with main layout
-     * 
-     * @param string $view The view file to render
-     * @param array $data Data to pass to the view
-     */
-    protected function renderWithLayout($view, $data = [])
-    {
-        // Extract data to make variables available in views
-        extract($data);
-
-        // Start output buffering to capture the view content
-        ob_start();
-
-        // Require the view file
-        if (file_exists('../app/Views/' . $view . '.php')) {
-            require_once '../app/Views/' . $view . '.php';
-        } else {
-            die('View does not exist: ' . $view);
-        }
-
-        // Get the view content
-        $content = ob_get_clean();
-
-        // Now require the layout and pass the content
-        if (file_exists('../app/Views/layouts/main.php')) {
-            require_once '../app/Views/layouts/main.php';
-        } else {
-            die('Layout does not exist');
-        }
     }
 }

@@ -1,0 +1,26 @@
+# Prevent PHP execution in uploads directory
+
+# Security: Block all script execution
+
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|phps|phar|cgi|pl|py|jsp|asp|sh|cgi)$">
+Order Allow,Deny
+Deny from all
+</FilesMatch>
+
+# Allow only images and PDFs
+
+<FilesMatch "\.(jpg|jpeg|png|gif|pdf)$">
+Order Deny,Allow
+Allow from all
+</FilesMatch>
+
+# Disable directory listing
+
+Options -Indexes
+
+# Prevent access to hidden files
+
+<FilesMatch "^\.">
+Order Allow,Deny
+Deny from all
+</FilesMatch>

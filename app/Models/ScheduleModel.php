@@ -22,7 +22,7 @@ class ScheduleModel
 
     public function getAll()
     {
-        $this->db->prepare('SELECT s.*, b.plate_number, r.route_code, r.origin_city, r.destination_city FROM schedules s JOIN buses b ON s.bus_id = b.id JOIN routes r ON s.route_id = r.route_id ORDER BY s.departure_datetime DESC');
+        $this->db->prepare('SELECT s.*, b.plate_number, bc.base_price_multiplier, r.route_code, r.origin_city, r.destination_city, (s.base_price * bc.base_price_multiplier) as final_price FROM schedules s JOIN buses b ON s.bus_id = b.id JOIN bus_classes bc ON b.bus_class_id = bc.id JOIN routes r ON s.route_id = r.route_id ORDER BY s.departure_datetime DESC');
         return $this->db->fetchAll();
     }
 
@@ -103,6 +103,9 @@ class ScheduleModel
         $dateStart = $date . ' 00:00:00';
         $dateEnd = $date . ' 23:59:59';
 
+        // Get current datetime
+        $currentDatetime = date('Y-m-d H:i:s');
+
         $this->db->prepare('
             SELECT 
                 s.id as schedule_id,
@@ -136,6 +139,7 @@ class ScheduleModel
             WHERE r.origin_city = :origin
             AND r.destination_city = :destination
             AND s.departure_datetime BETWEEN :date_start AND :date_end
+            AND s.departure_datetime >= :current_datetime
             AND s.available_seats >= :passengers
             AND s.status = "scheduled"
             AND r.status = "active"
@@ -147,6 +151,7 @@ class ScheduleModel
         $this->db->bind(':destination', $destination);
         $this->db->bind(':date_start', $dateStart);
         $this->db->bind(':date_end', $dateEnd);
+        $this->db->bind(':current_datetime', $currentDatetime);
         $this->db->bind(':passengers', $passengers);
 
         return $this->db->fetchAll();
@@ -321,14 +326,13 @@ class ScheduleModel
             ];
         }
 
-        // Find current departed schedule for this bus
+        // Find the most recent schedule for this bus before the new departure
         $sql = "
             SELECT s.*, s.route_type as schedule_route_type, r.origin_city, r.destination_city
             FROM schedules s
             JOIN routes r ON s.route_id = r.route_id
             WHERE s.bus_id = :bus_id
-            AND s.status = 'departed'
-            AND s.arrival_datetime > NOW()
+            AND s.status IN ('scheduled', 'departed')
         ";
 
         if ($exclude_schedule_id) {
@@ -343,10 +347,10 @@ class ScheduleModel
             $this->db->bind(':exclude_id', $exclude_schedule_id);
         }
 
-        $currentSchedule = $this->db->fetch();
+        $lastSchedule = $this->db->fetch();
 
-        // No current departed schedule, bus is free
-        if (!$currentSchedule) {
+        // No previous schedule, any route type is allowed
+        if (!$lastSchedule) {
             return [
                 'valid' => true,
                 'message' => '',
@@ -354,56 +358,69 @@ class ScheduleModel
             ];
         }
 
-        // Check if new departure is after current arrival
-        // Convert to timestamps for accurate comparison
+        // Get times
+        $lastArrivalTime = strtotime($lastSchedule['arrival_datetime']);
         $newDepartureTime = strtotime($departure_datetime);
-        $currentArrivalTime = strtotime($currentSchedule['arrival_datetime']);
 
-        if ($newDepartureTime <= $currentArrivalTime) {
+        // New departure must be AFTER (>) previous arrival, not equal
+        if ($newDepartureTime <= $lastArrivalTime) {
+            $timeDiff = $lastArrivalTime - $newDepartureTime;
+            $minutesDiff = round($timeDiff / 60);
+
+            if ($newDepartureTime < $lastArrivalTime) {
+                $message = 'Waktu keberangkatan harus setelah waktu tiba jadwal sebelumnya. ' .
+                    'Jadwal sebelumnya tiba pada ' . date('d/m/Y H:i', $lastArrivalTime) .
+                    ' (' . $lastSchedule['origin_city'] . ' → ' . $lastSchedule['destination_city'] . '). ' .
+                    'Waktu keberangkatan yang Anda masukkan (' . date('d/m/Y H:i', $newDepartureTime) . ') ' .
+                    'lebih cepat ' . abs($minutesDiff) . ' menit dari waktu tiba.';
+            } else {
+                $message = 'Waktu keberangkatan tidak boleh sama dengan waktu tiba jadwal sebelumnya. ' .
+                    'Jadwal sebelumnya tiba pada ' . date('d/m/Y H:i', $lastArrivalTime) .
+                    ' (' . $lastSchedule['origin_city'] . ' → ' . $lastSchedule['destination_city'] . '). ' .
+                    'Berikan jeda waktu minimal 1 menit untuk transit.';
+            }
+
             return [
                 'valid' => false,
-                'message' => 'Bus masih dalam perjalanan. Keberangkatan jadwal baru harus setelah jam tiba ' .
-                    date('d/m/Y H:i', $currentArrivalTime) .
-                    ' (Rute saat ini: ' . $currentSchedule['origin_city'] . ' → ' . $currentSchedule['destination_city'] . '). ' .
-                    'Jadwal yang Anda masukkan berangkat pada ' . date('d/m/Y H:i', $newDepartureTime),
-                'current_schedule' => $currentSchedule
+                'message' => $message,
+                'current_schedule' => $lastSchedule
             ];
         }
 
-        // Check if route type is opposite
-        $currentRouteType = $currentSchedule['schedule_route_type'] ?? 'forward';
-        if ($currentRouteType === $route_type) {
+        // Check route type logic: must alternate between forward and return
+        $lastRouteType = $lastSchedule['schedule_route_type'] ?? 'forward';
+
+        if ($lastRouteType === $route_type) {
             $expectedType = ($route_type === 'forward') ? 'return' : 'forward';
             $expectedTypeText = ($expectedType === 'return') ? 'Arus Balik' : 'Arus Berangkat';
+            $currentTypeText = ($lastRouteType === 'forward') ? 'Arus Berangkat' : 'Arus Balik';
 
             return [
                 'valid' => false,
-                'message' => 'Bus sedang beroperasi pada arus ' .
-                    ($currentRouteType === 'forward' ? 'berangkat' : 'balik') .
-                    ' (' . $currentSchedule['origin_city'] . ' → ' . $currentSchedule['destination_city'] . '). ' .
-                    'Jadwal selanjutnya harus menggunakan ' . $expectedTypeText,
-                'current_schedule' => $currentSchedule
+                'message' => 'Bus terakhir dijadwalkan sebagai ' . $currentTypeText .
+                    ' (' . $lastSchedule['origin_city'] . ' → ' . $lastSchedule['destination_city'] . '). ' .
+                    'Jadwal berikutnya harus menggunakan ' . $expectedTypeText,
+                'current_schedule' => $lastSchedule
             ];
         }
 
-        // If new schedule is 'return', check if route goes back to origin
-        if ($route_type === 'return') {
-            // Rute baru harus dari destination lama ke origin lama
-            if ($newRoute['origin_city'] !== $currentSchedule['destination_city']) {
-                return [
-                    'valid' => false,
-                    'message' => 'Untuk arus balik, rute harus berangkat dari ' . $currentSchedule['destination_city'] .
-                        ' (tujuan jadwal sebelumnya). Rute yang dipilih berangkat dari ' . $newRoute['origin_city'],
-                    'current_schedule' => $currentSchedule
-                ];
-            }
+        // Check if route origin matches previous route destination
+        // Bus harus berada di lokasi tujuan jadwal sebelumnya
+        if ($newRoute['origin_city'] !== $lastSchedule['destination_city']) {
+            return [
+                'valid' => false,
+                'message' => 'Titik keberangkatan rute baru harus dari ' . $lastSchedule['destination_city'] .
+                    ' (lokasi tiba jadwal sebelumnya). Rute yang dipilih berangkat dari ' . $newRoute['origin_city'] .
+                    '. Pilih rute yang berangkat dari ' . $lastSchedule['destination_city'],
+                'current_schedule' => $lastSchedule
+            ];
         }
 
         // All checks passed
         return [
             'valid' => true,
             'message' => '',
-            'current_schedule' => $currentSchedule
+            'current_schedule' => $lastSchedule
         ];
     }
 }
